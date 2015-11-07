@@ -26,6 +26,9 @@ main = hspec $ do
       let hm = insert' "2" "two" $ insert' "1" "one" $ initialState 1
       query' "1" hm `shouldBe` Nothing
       query' "2" hm `shouldBe` (Just "two")
+    it "deletes the deleted key from the mru list" $ do
+      let hm = insert' "2" "two" $ insert' "1" "one" $ initialState 1
+      hm^.mru `shouldBe` ["2"]
     it "updates the most recently used list to reflect queries" $ do
       let hm = insert' "2" "two" $ insert' "1" "one" $ initialState 2
       (queried' "1" hm)^.mru `shouldBe` ["1", "2"]
