@@ -3,7 +3,7 @@
 module LimitedHashMap where
 
 import           Control.Lens ((^.), (%~), makeLenses)
-import           Control.Monad.State (State, get, modify)
+import           Control.Monad.State (StateT, get, modify)
 import           Data.ByteString (ByteString)
 import qualified Data.HashMap.Lazy as HML
 
@@ -16,8 +16,8 @@ data LimitedHashMap = LimitedHashMap
 
 makeLenses ''LimitedHashMap
 
--- | The state monad for easy use of the LHM
-type LHM a = State LimitedHashMap a
+-- | The monad stack for easy use of the LHM
+type LHM a = StateT LimitedHashMap IO a
 
 -- | The inital state to use when starting up
 initialState :: Int -> LimitedHashMap
