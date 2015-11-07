@@ -4,6 +4,7 @@ import           Control.Monad.State
 
 import           Control.Lens
 import           Test.Hspec
+import qualified Data.HashMap.Lazy as HML
 
 import           LimitedHashMap
 
@@ -18,7 +19,10 @@ main = hspec $ do
       (query' "1" $ insert' "1" "one" $ initialState 10) `shouldBe` (Just "one")
     it "recognizes non-existent keys" $ do
       (query' "2" $ insert' "1" "one" $ initialState 10) `shouldBe` Nothing
-    it "should only save the specified amount of KVPs" $ do
+    it "only saves the specified amount of KVPs" $ do
+      let hm = insert' "2" "two" $ insert' "1" "one" $ initialState 1
+      HML.size (hm^.hashMap) `shouldBe` 1
+    it "deletes the right key when full" $ do
       let hm = insert' "2" "two" $ insert' "1" "one" $ initialState 1
       query' "1" hm `shouldBe` Nothing
       query' "2" hm `shouldBe` (Just "two")
