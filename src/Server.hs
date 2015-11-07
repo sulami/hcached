@@ -9,6 +9,7 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State (get)
 import qualified Data.ByteString.Char8 as C8
 
+import           Control.Lens (view)
 import           Network.Simple.TCP (
   HostPreference (Host), Socket, SockAddr, accept, listen, recv, send
   )
@@ -16,32 +17,30 @@ import           Network.Simple.TCP (
 import           LimitedHashMap
 
 -- | Run the server on the specified port
-runServer :: Bool -> Word -> LHM ()
-runServer debug port = do
-  liftIO . when debug . putStrLn $ "Listening on port " ++ show port
-  listen (Host "127.0.0.1") (show port) (listener debug)
+runServer :: Word -> LHM ()
+runServer port = do
+  debugP $ "Listening on port " ++ show port
+  listen (Host "127.0.0.1") (show port) listener
 
 -- | Loop and listen
-listener :: Bool -> (Socket, SockAddr) -> LHM ()
-listener debug (sock, addr) = do
-  accept sock $ handler debug
-  listener debug (sock, addr)
+listener :: (Socket, SockAddr) -> LHM ()
+listener (sock, addr) = do
+  accept sock handler
+  listener (sock, addr)
 
   -- | Handle an incoming connection
-handler :: Bool -> (Socket, SockAddr) -> LHM ()
-handler debug (sock, remoteAddr) = do
-  when debug . liftIO . putStrLn $
-    "Incoming connection from " ++ show remoteAddr
+handler :: (Socket, SockAddr) -> LHM ()
+handler (sock, remoteAddr) = do
+  debugP $ "Incoming connection from " ++ show remoteAddr
   inc <- recv sock 256
   case inc of
     Nothing  -> return ()
-    Just msg -> parse debug sock msg
+    Just msg -> parse sock msg
 
 -- | Parse a received message and act accordingly
-parse :: Bool -> Socket -> C8.ByteString -> LHM ()
-parse debug sock msg = do
-  when debug . liftIO . putStrLn $
-    "Received message: " ++ show msg
+parse :: Socket -> C8.ByteString -> LHM ()
+parse sock msg = do
+  debugP $ "Received message: " ++ show msg
   let cmds = C8.words msg
   case head cmds of
     "set" -> insert (cmds !! 1) (cmds !! 2)
@@ -51,4 +50,9 @@ parse debug sock msg = do
         Nothing  -> send sock "NOTFOUND"
         Just val -> send sock val
     _ -> return ()
+
+debugP :: String -> LHM ()
+debugP msg = do
+  enabled <- (view debug) <$> get
+  when enabled . liftIO . putStrLn . ("[DEBUG] " ++) $ msg
 

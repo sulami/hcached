@@ -23,6 +23,6 @@ instance Options MainOptions where
 -- | Main entry point.
 main :: IO ()
 main = runCommand $ \opts args -> do
-  execStateT (runServer (optDebug opts) (optPort opts)) $ initialState 100
+  execStateT (runServer $ optPort opts) $ initialState (optDebug opts) 100
   return ()
 
