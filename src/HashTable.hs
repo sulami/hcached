@@ -39,3 +39,9 @@ insert k v = do
     (if needsDeletion then hashMap %~ (HML.delete delCandidate) else id) .
     (used %~ (++ [k]))
 
+-- | Lookup a value for a key
+lookup :: ByteString -> LHM (Maybe ByteString)
+lookup k = do
+  state <- get
+  return . HML.lookup k $ state^.hashMap
+
