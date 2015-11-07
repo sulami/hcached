@@ -1,8 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module LimitedHashMap (
-  query, initalState, insert
-) where
+module LimitedHashMap where
 
 import           Control.Lens ((^.), (%~), makeLenses)
 import           Control.Monad.State (State, get, modify)
@@ -22,8 +20,8 @@ makeLenses ''LimitedHashMap
 type LHM a = State LimitedHashMap a
 
 -- | The inital state to use when starting up
-initalState :: Int -> LimitedHashMap
-initalState msize = LimitedHashMap HML.empty msize []
+initialState :: Int -> LimitedHashMap
+initialState msize = LimitedHashMap HML.empty msize []
 
 -- | Insert a new KVP
 insert :: ByteString -> ByteString -> LHM ()
