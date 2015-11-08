@@ -20,17 +20,17 @@ import           LimitedHashMap
 runServer :: Word -> LHM ()
 runServer port = do
   debugP $ "Listening on port " ++ show port
-  listen (Host "127.0.0.1") (show port) listener
+  listen (Host "127.0.0.1") (show port) hear
 
--- | Loop and listen
-listener :: (Socket, SockAddr) -> LHM ()
-listener (sock, addr) = do
-  accept sock handler
-  listener (sock, addr)
+-- | Loop and "listen"
+hear :: (Socket, SockAddr) -> LHM ()
+hear (sock, addr) = do
+  accept sock handle
+  hear (sock, addr)
 
   -- | Handle an incoming connection
-handler :: (Socket, SockAddr) -> LHM ()
-handler (sock, remoteAddr) = do
+handle :: (Socket, SockAddr) -> LHM ()
+handle (sock, remoteAddr) = do
   debugP $ "Incoming connection from " ++ show remoteAddr
   inc <- recv sock 256
   case inc of
@@ -51,6 +51,7 @@ parse sock msg = do
         Just val -> send sock val
     _ -> return ()
 
+-- | Print debug output if enabled
 debugP :: String -> LHM ()
 debugP msg = do
   enabled <- (view debug) <$> get
