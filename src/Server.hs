@@ -46,26 +46,26 @@ parse sock msg = do
   case head cmds of
     "set" -> parseSet sock $ drop 1 cmds
     "get" -> parseGet sock $ drop 1 cmds
-    _     -> send sock "UNSUPPORTED"
+    _     -> send sock "ERROR"
 
 -- | Set a key-value-pair
 parseSet :: Socket -> [C8.ByteString] -> LHM ()
 parseSet sock msg = do
   if length msg < 2
-    then send sock "INVALID"
+    then send sock "CLIENT_ERROR"
     else do
       insert (head msg) (C8.unwords $ drop 1 msg)
-      send sock "OK"
+      send sock "STORED"
 
 -- | Get a value for a key
 parseGet :: Socket -> [C8.ByteString] -> LHM ()
 parseGet sock msg = do
   if length msg /= 1
-    then send sock "INVALID"
+    then send sock "CLIENT_ERROR"
     else do
       rv <- query $ head msg
       case rv of
-        Nothing  -> send sock "NOTFOUND"
+        Nothing  -> send sock "NOT_FOUND"
         Just val -> send sock $ C8.unwords ["VALUE", val]
 
 -- | Print debug output if enabled
