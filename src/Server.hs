@@ -42,27 +42,27 @@ parse lhm sock msg = do
   case head cmds of
     "set" -> parseSet lhm sock $ drop 1 cmds
     "get" -> parseGet lhm sock $ drop 1 cmds
-    _     -> send sock "ERROR"
+    _     -> send sock $ C8.unwords ["ERROR unknown command", head cmds, "\r\n"]
 
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
 parseSet lhm sock msg = do
   if length msg < 2
-    then send sock "CLIENT_ERROR"
+    then send sock "CLIENT_ERROR\r\n"
     else do
       set lhm (head msg) (C8.unwords $ drop 1 msg)
-      send sock "STORED"
+      send sock "STORED\r\n"
 
 -- | Get a value for a key
 parseGet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
 parseGet lhm sock msg = do
   if length msg /= 1
-    then send sock "CLIENT_ERROR"
+    then send sock "CLIENT_ERROR\r\n"
     else do
       rv <- get lhm $ head msg
       case rv of
-        Nothing  -> send sock "NOT_FOUND"
-        Just val -> send sock $ C8.unwords ["VALUE", val]
+        Nothing  -> send sock "NOT_FOUND\r\n"
+        Just val -> send sock $ C8.unwords ["VALUE", val, "\r\n"]
 
 -- | Print debug output if enabled
 debugP :: MVar LimitedHashMap -> String -> IO ()
