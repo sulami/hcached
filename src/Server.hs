@@ -48,7 +48,7 @@ parseSet lhm sock msg = do
   if length msg < 2
     then send sock "CLIENT_ERROR"
     else do
-      insert lhm (head msg) (C8.unwords $ drop 1 msg)
+      set lhm (head msg) (C8.unwords $ drop 1 msg)
       send sock "STORED"
 
 -- | Get a value for a key
@@ -57,7 +57,7 @@ parseGet lhm sock msg = do
   if length msg /= 1
     then send sock "CLIENT_ERROR"
     else do
-      rv <- query lhm $ head msg
+      rv <- get lhm $ head msg
       case rv of
         Nothing  -> send sock "NOT_FOUND"
         Just val -> send sock $ C8.unwords ["VALUE", val]
