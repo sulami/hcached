@@ -20,21 +20,17 @@ main = hspec $ do
       hm <- insert' "1" "one" $ initialState False 10
       query' "2" hm `shouldBe` Nothing
     it "only saves the specified amount of KVPs" $ do
-      hm0 <- insert' "1" "one" $ initialState False 1
-      hm <- insert' "2" "two" hm0
+      hm <- (insert' "2" "two") =<< insert' "1" "one" (initialState False 1)
       HML.size (hm^.hashMap) `shouldBe` 1
     it "deletes the first inserted key when full" $ do
-      hm0 <- insert' "1" "one" $ initialState False 1
-      hm <- insert' "2" "two" hm0
+      hm <- (insert' "2" "two") =<< insert' "1" "one" (initialState False 1)
       query' "1" hm `shouldBe` Nothing
       query' "2" hm `shouldBe` (Just "two")
     it "deletes the deleted key from the mru list" $ do
-      hm0 <- insert' "1" "one" $ initialState False 1
-      hm <- insert' "2" "two" hm0
+      hm <- (insert' "2" "two") =<< insert' "1" "one" (initialState False 1)
       hm^.mru `shouldBe` ["2"]
     it "updates the most recently used list to reflect queries" $ do
-      hm0 <- insert' "1" "one" $ initialState False 2
-      hm <- insert' "2" "two" hm0
+      hm <- (insert' "2" "two") =<< insert' "1" "one" (initialState False 2)
       rv <- queried' "1" hm
       rv^.mru `shouldBe` ["1", "2"]
 
