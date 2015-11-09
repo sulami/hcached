@@ -9,6 +9,7 @@ import           Server (runServer)
 data MainOptions = MainOptions
   { optDebug :: Bool -- ^ Enable debug output
   , optPort  :: Word -- ^ Port to listen on
+  , optSize  :: Int  -- ^ Size of the hashmap
   }
 
 instance Options MainOptions where
@@ -16,10 +17,12 @@ instance Options MainOptions where
     <*> simpleOption "debug" False
         "Enable debug output"
     <*> simpleOption "port" 11211
-        "Port to listen on (default 11211)"
+        "Port to listen on"
+    <*> simpleOption "size" 100
+        "Size of the hashmap in keys"
 
 -- | Main entry point.
 main :: IO ()
 main = runCommand $ \opts args -> do
-  runServer (initialState (optDebug opts) 100) $ optPort opts
+  runServer (initialState (optDebug opts) (optSize opts)) $ optPort opts
 
