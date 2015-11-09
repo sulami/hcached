@@ -19,6 +19,7 @@ library
                      , LimitedHashMap
   build-depends:       base >= 4.7 && < 5
                      , bytestring
+                     , network
                      , lens
                      , unordered-containers
                      , network-simple

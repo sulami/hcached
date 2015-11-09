@@ -25,11 +25,13 @@ runServer state port = do
   -- | Handle an incoming connection
 handle :: MVar LimitedHashMap -> (Socket, SockAddr) -> IO ()
 handle lhm (sock, remoteAddr) = do
-  debugP lhm $ "Incoming connection from " ++ show remoteAddr
   inc <- recv sock 256
   case inc of
     Nothing  -> return ()
-    Just msg -> parse lhm sock msg
+    Just msg -> do
+      debugP lhm $ "Incoming connection from " ++ show remoteAddr
+      parse lhm sock msg
+      handle lhm (sock, remoteAddr)
 
 -- | Parse a received message and act accordingly. Validity checking is done in
 -- the individual parsers
