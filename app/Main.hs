@@ -1,7 +1,5 @@
 module Main where
 
-import           Control.Monad.State (execStateT)
-
 import           Options (Options, defineOptions, runCommand, simpleOption)
 
 import           LimitedHashMap (initialState)
@@ -23,6 +21,5 @@ instance Options MainOptions where
 -- | Main entry point.
 main :: IO ()
 main = runCommand $ \opts args -> do
-  execStateT (runServer $ optPort opts) $ initialState (optDebug opts) 100
-  return ()
+  runServer (initialState (optDebug opts) 100) $ optPort opts
 
