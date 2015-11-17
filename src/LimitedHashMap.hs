@@ -7,10 +7,12 @@ import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
 import           Control.Lens ((^.), (%~), makeLenses)
 import           Data.ByteString (ByteString)
 import qualified Data.HashMap.Lazy as HML
+import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 
 -- | Data that is stored together with a value
 data Value = Value
-  { _value :: !ByteString
+  { _value :: !ByteString -- ^ The actual value as supplied
+  , _ttl   :: !POSIXTime  -- ^ The time to live of this KVP
   } deriving (Show)
 
 makeLenses ''Value
@@ -52,7 +54,9 @@ set' k v s =
      (mru %~ (++ [k])) s
 
 buildValue :: ByteString -> IO Value
-buildValue = return . Value
+buildValue val = do
+  now <- getPOSIXTime
+  return $ Value val now
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
