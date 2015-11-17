@@ -63,8 +63,15 @@ buildValue val t = do
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
 get lhm k = do
   state <- readMVar lhm
-  modifyMVar_ lhm $ updateMRU k
-  return $ get' k state
+  now <- getPOSIXTime
+  case get' k state of
+    Nothing  -> return Nothing
+    Just val -> if val^.ttl < now
+      then do
+        return Nothing
+      else do
+        modifyMVar_ lhm $ updateMRU k
+        return $ get' k state
 
 -- | Pure version of 'query' for testing
 get' :: ByteString -> LimitedHashMap -> Maybe Value

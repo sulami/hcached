@@ -1,5 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import           Control.Concurrent.MVar (newMVar, readMVar)
+import           Control.Monad (when)
+import           Data.Maybe (isJust)
+
 import           Control.Lens ((^.))
 import qualified Data.HashMap.Lazy as HML
 import           Data.Time.Clock.POSIX (getPOSIXTime)
@@ -63,4 +67,10 @@ main = hspec $ do
       case get' "1" hm of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.ttl - now `shouldBe` 60
+
+    it "does not return expired KVPs" $ do
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" (-1)
+      rv <- get lhm "1"
+      when (isJust rv) $ assertFailure "Expired value returned"
 
