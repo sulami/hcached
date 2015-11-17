@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Lens ((^.))
-import           Test.Hspec
 import qualified Data.HashMap.Lazy as HML
+import           Test.Hspec
+import           Test.HUnit.Base (assertFailure)
 
 import           LimitedHashMap
 
@@ -15,7 +16,9 @@ main = hspec $ do
       (initialState False 10)^.mru `shouldBe` []
     it "can set a key-value-pair" $ do
       hm <- set' "1" "one" $ initialState False 10
-      get' "1" hm `shouldBe` (Just "one")
+      case get' "1" hm of
+        Nothing  -> assertFailure "Empty result"
+        Just val -> val^.value `shouldBe` "one"
     it "recognizes non-existent keys" $ do
       hm <- set' "1" "one" $ initialState False 10
       get' "2" hm `shouldBe` Nothing
@@ -25,7 +28,9 @@ main = hspec $ do
     it "deletes the first set key when full" $ do
       hm <- (set' "2" "two") =<< set' "1" "one" (initialState False 1)
       get' "1" hm `shouldBe` Nothing
-      get' "2" hm `shouldBe` (Just "two")
+      case get' "2" hm of
+        Nothing  -> assertFailure "Empty result"
+        Just val -> val^.value `shouldBe` "two"
     it "deletes the deleted key from the mru list" $ do
       hm <- (set' "2" "two") =<< set' "1" "one" (initialState False 1)
       hm^.mru `shouldBe` ["2"]

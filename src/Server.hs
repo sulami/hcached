@@ -62,7 +62,7 @@ parseGet lhm sock msg = do
       rv <- get lhm $ head msg
       case rv of
         Nothing  -> answer sock "NOT_FOUND"
-        Just val -> answer sock $ C8.unwords ["VALUE", val]
+        Just val -> answer sock $ C8.unwords ["VALUE", view value val]
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> C8.ByteString -> IO ()

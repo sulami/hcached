@@ -41,6 +41,7 @@ test-suite hcached-test
   build-depends:       base
                      , hcached
                      , hspec
+                     , HUnit
                      , mtl
                      , unordered-containers
                      , lens
