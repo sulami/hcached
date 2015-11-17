@@ -43,6 +43,7 @@ set' :: ByteString -> ByteString -> POSIXTime -> LimitedHashMap
      -> IO LimitedHashMap
 set' k v t s =
   let currentSize = HML.size $ s^.hashMap
+      -- TODO delete expired keys to make space if needed
       isFull = currentSize == s^.maxSize
       alreadyMember = HML.member k $ s^.hashMap
       needsDeletion = isFull && not alreadyMember
@@ -69,7 +70,7 @@ get lhm k = do
     Nothing  -> return Nothing
     Just val -> if val^.ttl < now
       then do
-        -- TODO cleanup
+        delete lhm k
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
