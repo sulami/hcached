@@ -74,3 +74,16 @@ main = hspec $ do
       rv <- get lhm "1"
       when (isJust rv) $ assertFailure "Expired value returned"
 
+    it "can delete a KVP from both the hashmap and the mru" $ do
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 0
+      hm0 <- readMVar lhm
+      HML.size (hm0^.hashMap) `shouldBe` 1
+      length (hm0^.mru) `shouldBe` 1
+      delete lhm "1"
+      hm1 <- readMVar lhm
+      HML.size (hm1^.hashMap) `shouldBe` 0
+      length (hm1^.mru) `shouldBe` 0
+      rv <- get lhm "1"
+      when (isJust rv) $ assertFailure "Deleted value returned"
+

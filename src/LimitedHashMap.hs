@@ -54,6 +54,7 @@ set' k v t s =
      (if needsDeletion then hashMap %~ (HML.delete delCandidate) else id) $
      (mru %~ (++ [k])) s
 
+-- | Construct a 'Value' and calculate its TTL
 buildValue :: ByteString -> POSIXTime -> IO Value
 buildValue val t = do
   now <- getPOSIXTime
@@ -68,6 +69,7 @@ get lhm k = do
     Nothing  -> return Nothing
     Just val -> if val^.ttl < now
       then do
+        -- TODO cleanup
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
@@ -80,4 +82,10 @@ get' k s = HML.lookup k $ s^.hashMap
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ ((k :) . (filter (/= k))) $ lhm
+
+-- | Delete a KVP
+delete :: MVar LimitedHashMap -> ByteString -> IO ()
+delete lhm k = do
+  modifyMVar_ lhm (return . (hashMap %~ (HML.delete k)))
+  modifyMVar_ lhm (return . (mru %~ (filter (/= k))))
 
