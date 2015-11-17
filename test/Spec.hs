@@ -22,49 +22,71 @@ main = hspec $ do
       (initialState False 10)^.mru `shouldBe` []
 
     it "can set a key-value-pair" $ do
-      hm <- set' "1" "one" 10 $ initialState False 10
-      case get' "1" hm of
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      rv <- get lhm "1"
+      case rv of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.value `shouldBe` "one"
 
     it "recognizes non-existent keys" $ do
-      hm <- set' "1" "one" 0 $ initialState False 10
-      get' "2" hm `shouldBe` Nothing
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      hm <- readMVar lhm
+      rv <- get lhm "2"
+      when (isJust rv) $ assertFailure "Return nonexistent key"
 
     it "only saves the specified amount of KVPs" $ do
-      hm <- (set' "2" "two" 10) =<< set' "1" "one" 10 (initialState False 1)
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      hm <- readMVar lhm
       HML.size (hm^.hashMap) `shouldBe` 1
 
     it "deletes the first set key when full" $ do
-      hm <- (set' "2" "two" 10) =<< set' "1" "one" 10 (initialState False 1)
-      get' "1" hm `shouldBe` Nothing
-      case get' "2" hm of
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      set lhm "2" "two" 10
+      rv1 <- get lhm "1"
+      rv1 `shouldBe` Nothing
+      rv2 <- get lhm "2"
+      case rv2 of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.value `shouldBe` "two"
 
     it "deletes the deleted key from the mru list" $ do
-      hm <- (set' "2" "two" 10) =<< set' "1" "one" 10 (initialState False 1)
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      set lhm "2" "two" 10
+      hm <- readMVar lhm
       hm^.mru `shouldBe` ["2"]
 
     it "does not delete keys when replacing existing ones" $ do
-      hm <- (set' "1" "uno" 10) =<< (set' "2" "two" 10)
-            =<< set' "1" "one" 10 (initialState False 2)
-      case get' "2" hm of
+      lhm <- newMVar $ initialState False 2
+      set lhm "1" "one" 10
+      set lhm "2" "two" 10
+      set lhm "1" "uno" 10
+      rv2 <- get lhm "2"
+      case rv2 of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.value `shouldBe` "two"
-      case get' "1" hm of
+      rv1 <- get lhm "1"
+      case rv1 of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.value `shouldBe` "uno"
 
     it "updates the most recently used list to reflect queries" $ do
-      hm <- (set' "2" "two" 10) =<< set' "1" "one" 10 (initialState False 2)
-      rv <- updateMRU "1" hm
+      lhm <- newMVar $ initialState False 2
+      set lhm "1" "one" 10
+      set lhm "2" "two" 10
+      rv <- readMVar lhm >>= updateMRU "1"
       rv^.mru `shouldBe` ["1", "2"]
 
     it "sets the proper time-to-live" $ do
-      hm <- set' "1" "one" 60 (initialState False 2)
+      lhm <- newMVar $ initialState False 2
+      set lhm "1" "one" 60
       now <- getPOSIXTime
-      case get' "1" hm of
+      rv <- get lhm "1"
+      case rv of
         Nothing  -> assertFailure "Empty result"
         Just val -> val^.ttl - now `shouldBe` 60
 
