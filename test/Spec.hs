@@ -31,6 +31,6 @@ main = hspec $ do
       hm^.mru `shouldBe` ["2"]
     it "updates the most recently used list to reflect queries" $ do
       hm <- (set' "2" "two") =<< set' "1" "one" (initialState False 2)
-      rv <- get'' "1" hm
+      rv <- updateMRU "1" hm
       rv^.mru `shouldBe` ["1", "2"]
 

@@ -43,7 +43,7 @@ set' k v s =
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe ByteString)
 get lhm k = do
   state <- readMVar lhm
-  modifyMVar_ lhm $ get'' k
+  modifyMVar_ lhm $ updateMRU k
   return $ get' k state
 
 -- | Pure version of 'query' for testing
@@ -51,6 +51,6 @@ get' :: ByteString -> LimitedHashMap -> Maybe ByteString
 get' k s = HML.lookup k $ s^.hashMap
 
 -- | Update the most recently mru list to reflect a query
-get'' :: ByteString -> LimitedHashMap -> IO LimitedHashMap
-get'' k lhm = return $ mru %~ ((k :) . (filter (/= k))) $ lhm
+updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
+updateMRU k lhm = return $ mru %~ ((k :) . (filter (/= k))) $ lhm
 
