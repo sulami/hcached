@@ -35,6 +35,15 @@ main = hspec $ do
     it "deletes the deleted key from the mru list" $ do
       hm <- (set' "2" "two" 0) =<< set' "1" "one" 0 (initialState False 1)
       hm^.mru `shouldBe` ["2"]
+    it "does not delete keys when replacing existing ones" $ do
+      hm <- (set' "1" "uno" 0) =<< (set' "2" "two" 0)
+            =<< set' "1" "one" 0 (initialState False 2)
+      case get' "2" hm of
+        Nothing  -> assertFailure "Empty result"
+        Just val -> val^.value `shouldBe` "two"
+      case get' "1" hm of
+        Nothing  -> assertFailure "Empty result"
+        Just val -> val^.value `shouldBe` "uno"
     it "updates the most recently used list to reflect queries" $ do
       hm <- (set' "2" "two" 0) =<< set' "1" "one" 0 (initialState False 2)
       rv <- updateMRU "1" hm
