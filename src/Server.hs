@@ -7,8 +7,10 @@ module Server (
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
 import           Control.Monad (when)
 import qualified Data.ByteString.Char8 as C8
+import           Data.Char (isDigit)
 
 import           Control.Lens (view)
+import           Data.Time.Clock (secondsToDiffTime)
 import           Network.Simple.TCP (
   HostPreference (Host), Socket, SockAddr, acceptFork, recv, send, serve
   )
@@ -47,11 +49,15 @@ parse lhm sock msg = do
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
 parseSet lhm sock msg = do
-  if length msg < 2
-    then answer sock "CLIENT_ERROR"
+  if length msg < 3
+    then answer sock "CLIENT_ERROR insufficient arguments"
     else do
-      set lhm (head msg) (C8.unwords $ drop 1 msg)
-      answer sock "STORED"
+      let time = C8.unpack $ msg !! 1
+      if all isDigit time
+        then do
+          set lhm (head msg) (C8.unwords $ drop 2 msg) (realToFrac $ read time)
+          answer sock "STORED"
+        else answer sock "CLIENT ERROR invalid time format"
 
 -- | Get a value for a key
 parseGet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()

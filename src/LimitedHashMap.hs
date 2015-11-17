@@ -35,28 +35,29 @@ initialState :: Bool -> Int -> LimitedHashMap
 initialState dbg msize = LimitedHashMap HML.empty msize [] dbg
 
 -- | Insert a new KVP
-set :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-set lhm k v = modifyMVar_ lhm $ set' k v
+set :: MVar LimitedHashMap -> ByteString -> ByteString -> POSIXTime -> IO ()
+set lhm k v t = modifyMVar_ lhm $ set' k v t
 
 -- | Perform the actual insertion
-set' :: ByteString -> ByteString -> LimitedHashMap -> IO LimitedHashMap
-set' k v s =
+set' :: ByteString -> ByteString -> POSIXTime -> LimitedHashMap
+     -> IO LimitedHashMap
+set' k v t s =
   let currentSize = HML.size $ s^.hashMap
       isFull = currentSize == s^.maxSize
       alreadyMember = HML.member k $ s^.hashMap
       needsDeletion = isFull && not alreadyMember
       delCandidate = head $ s^.mru
   in do
-    value <- buildValue v
+    value <- buildValue v t
     return $ hashMap %~ (HML.insert k value) $
      (if needsDeletion then mru %~ tail else id) $
      (if needsDeletion then hashMap %~ (HML.delete delCandidate) else id) $
      (mru %~ (++ [k])) s
 
-buildValue :: ByteString -> IO Value
-buildValue val = do
+buildValue :: ByteString -> POSIXTime -> IO Value
+buildValue val t = do
   now <- getPOSIXTime
-  return $ Value val now
+  return $ Value val (now + t)
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
