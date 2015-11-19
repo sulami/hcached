@@ -8,7 +8,6 @@ import           Control.Applicative ((<|>), (<*>), (<*), liftA)
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
 import           Control.Monad (when)
 import qualified Data.ByteString.Char8 as C8
-import           Data.Char (isDigit)
 
 import           Control.Lens (view)
 import qualified Data.Attoparsec.ByteString as AP
@@ -54,13 +53,10 @@ parse lhm sock msg = do
     AP.Done r "set"    -> parseSet lhm sock r
     AP.Done r "get"    -> parseGet lhm sock r
     AP.Done r "delete" -> parseDel lhm sock r
-    _                  -> answer sock $ invalidCommand msg
+    _                  -> answer sock "CLIENT_ERROR invalid command: "
   where
     commandParser :: AP.Parser C8.ByteString
     commandParser = AP.takeWhile1 (AP.inClass "a-z") <* char8 ' '
-
-    invalidCommand :: C8.ByteString -> C8.ByteString
-    invalidCommand = C8.append "CLIENT_ERROR invalid command: "
 
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
