@@ -44,7 +44,7 @@ parse lhm sock msg = do
   case head cmds of
     "set" -> parseSet lhm sock $ drop 1 cmds
     "get" -> parseGet lhm sock $ drop 1 cmds
-    _     -> answer sock $ C8.unwords ["ERROR unknown command:", head cmds]
+    _     -> answer sock "CLIENT_ERROR unknown command"
 
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
@@ -63,7 +63,7 @@ parseSet lhm sock msg = do
 parseGet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
 parseGet lhm sock msg = do
   if length msg /= 1
-    then answer sock "CLIENT_ERROR"
+    then answer sock "CLIENT_ERROR invalid arguments"
     else do
       rv <- get lhm $ head msg
       case rv of
