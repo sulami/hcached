@@ -50,9 +50,9 @@ parse lhm sock msg = do
   debugP lhm $ "Received message: " ++ show msg
   let cmd = AP.parse commandParser msg
   case cmd of
-    AP.Done "set"    r -> parseSet lhm sock r
-    AP.Done "get"    r -> parseSet lhm sock r
-    AP.Done "delete" r -> parseSet lhm sock r
+    AP.Done r "set"    -> parseSet lhm sock r
+    AP.Done r "get"    -> parseSet lhm sock r
+    AP.Done r "delete" -> parseSet lhm sock r
     _                  -> answer sock $ invalidCommand msg
   where
     commandParser :: AP.Parser C8.ByteString
