@@ -96,16 +96,20 @@ parseGet lhm sock msg = do
 
 -- | Delete a KVP
 parseDel :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
-parseDel lhm sock msg = undefined --do
-  -- if length msg /= 1
-  --   then answer sock "CLIENT_ERROR invalid arguments"
-  --   else do
-  --     rv <- get lhm $ head msg
-  --     case rv of
-  --       Nothing -> answer sock "NOT_FOUND"
-  --       _       -> do
-  --         delete lhm $ head msg
-  --         answer sock "DELETED"
+parseDel lhm sock msg = do
+  let cmd = AP.parse delParser msg
+  case cmd of
+    AP.Fail _ _ _        -> answer sock "CLIENT_ERROR invalid arguments"
+    AP.Done _ (DelCmd k) -> do
+      rv <- get lhm k
+      case rv of
+        Nothing  -> answer sock "NOT_FOUND"
+        Just val -> do
+          delete lhm k
+          answer sock "DELETED"
+  where
+    delParser :: AP.Parser Command
+    delParser = DelCmd <$> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> C8.ByteString -> IO ()
