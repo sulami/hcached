@@ -24,6 +24,7 @@ library
                      , lens
                      , unordered-containers
                      , network-simple
+                     , attoparsec
   default-language:    Haskell2010
 
 executable hcached
