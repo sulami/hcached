@@ -39,7 +39,7 @@ handle lhm (sock, remoteAddr) = do
       handle lhm (sock, remoteAddr)
 
 -- | The possible commands and their structure
-data Command = SetCmd C8.ByteString C8.ByteString
+data Command = SetCmd POSIXTime C8.ByteString C8.ByteString
              | GetCmd C8.ByteString
              | DelCmd C8.ByteString
 
@@ -51,8 +51,8 @@ parse lhm sock msg = do
   let cmd = AP.parse commandParser msg
   case cmd of
     AP.Done r "set"    -> parseSet lhm sock r
-    AP.Done r "get"    -> parseSet lhm sock r
-    AP.Done r "delete" -> parseSet lhm sock r
+    AP.Done r "get"    -> parseGet lhm sock r
+    AP.Done r "delete" -> parseDel lhm sock r
     _                  -> answer sock $ invalidCommand msg
   where
     commandParser :: AP.Parser C8.ByteString
