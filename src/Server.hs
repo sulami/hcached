@@ -42,6 +42,7 @@ handle lhm (sock, remoteAddr) = do
 data Command = SetCmd POSIXTime C8.ByteString C8.ByteString
              | GetCmd C8.ByteString
              | DelCmd C8.ByteString
+             deriving (Show)
 
 -- | Parse a received message and act accordingly. Validity checking is done in
 -- the individual parsers
@@ -64,8 +65,8 @@ parse lhm sock msg = do
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
 parseSet lhm sock msg = do
-  let args = AP.parse setParser msg
-  case args of
+  let cmd = AP.parse setParser msg
+  case cmd of
     AP.Done _ (SetCmd t k v) -> set lhm k v t >> answer sock "STORED"
     _                        -> answer sock "CLIENT_ERROR invalid arguments"
   where
@@ -73,21 +74,25 @@ parseSet lhm sock msg = do
     setParser = SetCmd
       <$> ((liftA toPosixTime . AP.takeWhile $ AP.inClass "0-9") <* char8 ' ')
       <*> (AP.takeTill (== 22) <* char8 ' ')
-      <*> (AP.takeTill (\c -> c == 13 || c == 10) <* endOfLine)
+      <*> AP.takeTill (\c -> c == 13 || c == 10) <* endOfLine
 
     toPosixTime :: C8.ByteString -> POSIXTime
     toPosixTime = realToFrac . read . C8.unpack
 
 -- | Get a value for a key
 parseGet :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
-parseGet lhm sock msg = undefined --do
-  -- if length msg /= 1
-  --   then answer sock "CLIENT_ERROR invalid arguments"
-  --   else do
-  --     rv <- get lhm $ head msg
-  --     case rv of
-  --       Nothing  -> answer sock "NOT_FOUND"
-  --       Just val -> answer sock $ C8.unwords ["VALUE", view value val]
+parseGet lhm sock msg = do
+  let cmd = AP.parse getParser msg
+  case cmd of
+    AP.Fail _ _ _        -> answer sock "CLIENT_ERROR invalid arguments"
+    AP.Done _ (GetCmd k) -> do
+      rv <- get lhm k
+      case rv of
+        Nothing  -> answer sock "NOT_FOUND"
+        Just val -> answer sock $ view value val
+  where
+    getParser :: AP.Parser Command
+    getParser = GetCmd <$> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
 
 -- | Delete a KVP
 parseDel :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
