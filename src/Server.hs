@@ -68,9 +68,9 @@ parseSet lhm sock msg = do
   where
     setParser :: AP.Parser Command
     setParser = SetCmd
-      <$> ((liftA toPosixTime . AP.takeWhile $ AP.inClass "0-9") <* char8 ' ')
-      <*> (AP.takeTill (== 22) <* char8 ' ')
-      <*> AP.takeTill (\c -> c == 13 || c == 10) <* endOfLine
+      <$> (liftA toPosixTime . AP.takeWhile $ AP.inClass "0-9") <* char8 ' '
+      <*> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* char8 ' '
+      <*> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
 
     toPosixTime :: C8.ByteString -> POSIXTime
     toPosixTime = realToFrac . read . C8.unpack
