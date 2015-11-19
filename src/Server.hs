@@ -80,7 +80,7 @@ parseGet :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
 parseGet lhm sock msg = do
   let cmd = AP.parse getParser msg
   case cmd of
-    AP.Fail _ _ _        -> answer sock "CLIENT_ERROR invalid arguments"
+    AP.Fail {}           -> answer sock "CLIENT_ERROR invalid arguments"
     AP.Done _ (GetCmd k) -> do
       rv <- get lhm k
       case rv of
@@ -95,7 +95,7 @@ parseDel :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
 parseDel lhm sock msg = do
   let cmd = AP.parse delParser msg
   case cmd of
-    AP.Fail _ _ _        -> answer sock "CLIENT_ERROR invalid arguments"
+    AP.Fail {}           -> answer sock "CLIENT_ERROR invalid arguments"
     AP.Done _ (DelCmd k) -> do
       rv <- get lhm k
       case rv of
@@ -114,6 +114,6 @@ answer sock msg = send sock $ C8.concat [msg, "\r\n"]
 -- | Print debug output if enabled
 debugP :: MVar LimitedHashMap -> String -> IO ()
 debugP lhm msg = do
-  enabled <- (view debug) <$> readMVar lhm
+  enabled <- view debug <$> readMVar lhm
   when enabled . putStrLn . ("[DEBUG] " ++) $ msg
 
