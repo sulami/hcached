@@ -88,7 +88,7 @@ parseGet lhm sock msg = do
         Just val -> answer sock $ view value val
   where
     getParser :: AP.Parser Command
-    getParser = GetCmd <$> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
+    getParser = GetCmd <$> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* endOfLine
 
 -- | Delete a KVP
 parseDel :: MVar LimitedHashMap -> Socket -> C8.ByteString -> IO ()
@@ -105,7 +105,7 @@ parseDel lhm sock msg = do
           answer sock "DELETED"
   where
     delParser :: AP.Parser Command
-    delParser = DelCmd <$> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
+    delParser = DelCmd <$> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* endOfLine
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> C8.ByteString -> IO ()
