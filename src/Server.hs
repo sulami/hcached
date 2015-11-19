@@ -42,10 +42,11 @@ parse lhm sock msg = do
   debugP lhm $ "Received message: " ++ show msg
   let cmds = C8.words msg
   case head cmds of
-    "set" -> parseSet lhm sock $ drop 1 cmds
-    "get" -> parseGet lhm sock $ drop 1 cmds
-    _     -> answer sock $ C8.unwords [ "CLIENT_ERROR unknown command:",
-                                        head cmds ]
+    "set"    -> parseSet lhm sock $ drop 1 cmds
+    "get"    -> parseGet lhm sock $ drop 1 cmds
+    "delete" -> parseDel lhm sock $ drop 1 cmds
+    _        -> answer sock $ C8.unwords [ "CLIENT_ERROR unknown command:",
+                                           head cmds ]
 
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
@@ -54,7 +55,7 @@ parseSet lhm sock msg = do
     then answer sock "CLIENT_ERROR insufficient arguments"
     else do
       let time = C8.unpack $ msg !! 1
-      if all isDigit time
+      if all isDigit time -- TODO extract this/parser
         then do
           set lhm (head msg) (C8.unwords $ drop 2 msg) (realToFrac $ read time)
           answer sock "STORED"
@@ -70,6 +71,19 @@ parseGet lhm sock msg = do
       case rv of
         Nothing  -> answer sock "NOT_FOUND"
         Just val -> answer sock $ C8.unwords ["VALUE", view value val]
+
+-- | Delete a KVP
+parseDel :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
+parseDel lhm sock msg = do
+  if length msg /= 1
+    then answer sock "CLIENT_ERROR invalid arguments"
+    else do
+      rv <- get lhm $ head msg
+      case rv of
+        Nothing -> answer sock "NOT_FOUND"
+        _       -> do
+          delete lhm $ head msg
+          answer sock "DELETED"
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> C8.ByteString -> IO ()

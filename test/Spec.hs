@@ -2,7 +2,7 @@
 
 import           Control.Concurrent.MVar (newMVar, readMVar)
 import           Control.Monad (when)
-import           Data.Maybe (isJust)
+import           Data.Maybe (isJust, isNothing)
 
 import           Control.Lens ((^.))
 import qualified Data.HashMap.Lazy as HML
@@ -120,4 +120,30 @@ main = hspec $ do
       hm1 <- readMVar lhm
       HML.size (hm1^.hashMap) `shouldBe` 0
       length (hm1^.mru) `shouldBe` 0
+
+    it "deletes a KVP when ordered to" $ do
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      hm0 <- readMVar lhm
+      HML.size (hm0^.hashMap) `shouldBe` 1
+      length (hm0^.mru) `shouldBe` 1
+      delete lhm "1"
+      rv <- get lhm "1"
+      when (isJust rv) $ assertFailure "Deleted value returned"
+      hm1 <- readMVar lhm
+      HML.size (hm1^.hashMap) `shouldBe` 0
+      length (hm1^.mru) `shouldBe` 0
+
+    it "does not delete the wrong KVP if the desired one does not exist" $ do
+      lhm <- newMVar $ initialState False 1
+      set lhm "1" "one" 10
+      hm0 <- readMVar lhm
+      HML.size (hm0^.hashMap) `shouldBe` 1
+      length (hm0^.mru) `shouldBe` 1
+      delete lhm "2"
+      rv <- get lhm "1"
+      when (isNothing rv) $ assertFailure "No value returned"
+      hm1 <- readMVar lhm
+      HML.size (hm1^.hashMap) `shouldBe` 1
+      length (hm1^.mru) `shouldBe` 1
 
