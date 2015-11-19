@@ -50,9 +50,9 @@ set' k v t s =
       delCandidate = head $ s^.mru
   in do
     value <- buildValue v t
-    return $ hashMap %~ (HML.insert k value) $
+    return $ hashMap %~ HML.insert k value $
      (if needsDeletion then mru %~ tail else id) $
-     (if needsDeletion then hashMap %~ (HML.delete delCandidate) else id) $
+     (if needsDeletion then hashMap %~ HML.delete delCandidate else id) $
      (mru %~ (++ [k])) s
 
 -- | Construct a 'Value' and calculate its TTL
@@ -82,11 +82,11 @@ get' k s = HML.lookup k $ s^.hashMap
 
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
-updateMRU k lhm = return $ mru %~ ((k :) . (filter (/= k))) $ lhm
+updateMRU k lhm = return $ mru %~ (k :) . filter (/= k) $ lhm
 
 -- | Delete a KVP
 delete :: MVar LimitedHashMap -> ByteString -> IO ()
 delete lhm k = do
-  modifyMVar_ lhm (return . (hashMap %~ (HML.delete k)))
-  modifyMVar_ lhm (return . (mru %~ (filter (/= k))))
+  modifyMVar_ lhm (return . (hashMap %~ HML.delete k))
+  modifyMVar_ lhm (return . (mru %~ filter (/= k)))
 
