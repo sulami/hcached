@@ -44,7 +44,8 @@ parse lhm sock msg = do
   case head cmds of
     "set" -> parseSet lhm sock $ drop 1 cmds
     "get" -> parseGet lhm sock $ drop 1 cmds
-    _     -> answer sock "CLIENT_ERROR unknown command"
+    _     -> answer sock $ C8.unwords [ "CLIENT_ERROR unknown command:",
+                                        head cmds ]
 
 -- | Set a key-value-pair
 parseSet :: MVar LimitedHashMap -> Socket -> [C8.ByteString] -> IO ()
