@@ -13,7 +13,7 @@ import qualified Data.ByteString.Char8 as C8
 
 import           Control.Lens (view)
 import           Network.Simple.TCP (
-  HostPreference (Host), Socket, SockAddr, acceptFork, recv, send, serve
+  HostPreference (Host), Socket, SockAddr, recv, send, serve
   )
 
 import           Command
@@ -26,7 +26,7 @@ runServer state port = do
   debugP lhm $ "Listening on port " ++ show port
   serve (Host "127.0.0.1") (show port) $ handle lhm
 
-  -- | Handle an incoming connection
+-- | Handle an incoming connection
 handle :: MVar LimitedHashMap -> (Socket, SockAddr) -> IO ()
 handle lhm (sock, remoteAddr) = do
   inc <- recv sock 256
