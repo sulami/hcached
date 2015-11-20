@@ -88,7 +88,7 @@ main = hspec $ do
       rv <- get lhm "1"
       case rv of
         Nothing  -> assertFailure "Empty result"
-        Just val -> val^.ttl - now `shouldBe` 60
+        Just val -> val^.ttl - now `shouldSatisfy` (> 55)
 
     it "does not return expired KVPs" $ do
       lhm <- newMVar $ initialState False 1
