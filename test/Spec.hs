@@ -147,3 +147,5 @@ main = hspec $ do
       HML.size (hm1^.hashMap) `shouldBe` 1
       length (hm1^.mru) `shouldBe` 1
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
+
