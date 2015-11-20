@@ -8,8 +8,8 @@ import           Test.Hspec
 
 import           Command (Command (..), parse)
 
-parserSpec :: Spec
-parserSpec = describe "Command Parser" $ do
+spec :: Spec
+spec = describe "Command Parser" $ do
   it "parses basic valid commands" $ do
     parse "set 1 key value\n" `shouldBe` (Right $ SetCmd 1 "key" "value")
     parse "get key\n" `shouldBe` (Right $ GetCmd "key")

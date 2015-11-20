@@ -14,8 +14,8 @@ import           Test.HUnit.Base (assertFailure)
 
 import           LimitedHashMap
 
-lhmSpec :: Spec
-lhmSpec = describe "LimitedHashMap" $ do
+spec :: Spec
+spec = describe "LimitedHashMap" $ do
   it "sets the proper initial maximum size" $
     initialState False 10^.maxSize `shouldBe` 10
 
