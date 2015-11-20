@@ -5,21 +5,43 @@
 
 module Command (
   Command (..),
-  parse
+  executeCommand, parse
 ) where
 
 import           Control.Applicative ((<|>), (<*>), (<*), liftA)
+import           Control.Concurrent.MVar (MVar)
 import           Data.ByteString.Char8 (ByteString, unpack)
 
+import           Control.Lens ((^.))
 import qualified Data.Attoparsec.ByteString as AP
 import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
 import           Data.Time.Clock.POSIX (POSIXTime)
+
+import           LimitedHashMap
 
 -- | The possible commands and their structure
 data Command = SetCmd POSIXTime ByteString ByteString
              | GetCmd ByteString
              | DelCmd ByteString
              deriving (Show)
+
+-- | Execute a command and return the answer for the client
+executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
+executeCommand lhm (SetCmd t k v) = do
+  set lhm k v t
+  return "STORED"
+executeCommand lhm (GetCmd k) = do
+  rv <- get lhm k
+  case rv of
+    Nothing  -> return "NOT_FOUND"
+    Just val -> return $ val^.value
+executeCommand lhm (DelCmd k) = do
+  rv <- get lhm k
+  case rv of
+    Nothing  -> return "NOT_FOUND"
+    Just val -> do
+      delete lhm k
+      return "DELETED"
 
 -- | What parser functions look like
 type CommandParser = AP.Parser Command

@@ -36,7 +36,14 @@ handle lhm (sock, remoteAddr) = do
       debugP lhm $ "Incoming connection from " ++ show remoteAddr
       debugP lhm $ "Received message: " ++ show msg
       let cmd = parse msg
-      handle lhm (sock, remoteAddr)
+      case cmd of
+        Left err -> do
+          answer sock err
+          handle lhm (sock, remoteAddr)
+        Right c  -> do
+          result <- executeCommand lhm c
+          answer sock result
+          handle lhm (sock, remoteAddr)
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> C8.ByteString -> IO ()
