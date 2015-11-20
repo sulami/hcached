@@ -15,11 +15,11 @@ import           LimitedHashMap
 main :: IO ()
 main = hspec $ do
   describe "LimitedHashMap" $ do
-    it "sets the proper initial maximum size" $ do
-      (initialState False 10)^.maxSize `shouldBe` 10
+    it "sets the proper initial maximum size" $
+      initialState False 10^.maxSize `shouldBe` 10
 
-    it "sets the proper initial used list" $ do
-      (initialState False 10)^.mru `shouldBe` []
+    it "sets the proper initial used list" $
+      initialState False 10^.mru `shouldBe` []
 
     it "can set a key-value-pair" $ do
       lhm <- newMVar $ initialState False 1
