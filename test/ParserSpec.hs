@@ -16,7 +16,8 @@ parserSpec = describe "Command Parser" $ do
     parse "delete key\n" `shouldBe` (Right $ DelCmd "key")
 
   it "parses set requests with multi-word values" $
-    parse "set 1 key value more values\n" `shouldSatisfy` isRight
+    parse "set 1 key value more values\n"
+      `shouldBe` (Right $ SetCmd 1 "key" "value more values")
 
   it "does not parse empty requests" $
     parse "\n" `shouldSatisfy` isLeft
