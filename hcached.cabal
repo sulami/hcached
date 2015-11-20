@@ -41,6 +41,8 @@ test-suite hcached-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       LimitedHashMapSpec
+                     , ParserSpec
   build-depends:       base
                      , hcached
                      , hspec

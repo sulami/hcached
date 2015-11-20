@@ -6,14 +6,14 @@ import           Data.Either (isLeft, isRight)
 
 import           Test.Hspec
 
-import           Command (parse)
+import           Command (Command (..), parse)
 
 parserSpec :: Spec
 parserSpec = describe "Command Parser" $ do
   it "parses basic valid commands" $ do
-    parse "set 1 key value\n" `shouldSatisfy` isRight
-    parse "get key\n" `shouldSatisfy` isRight
-    parse "delete key\n" `shouldSatisfy` isRight
+    parse "set 1 key value\n" `shouldBe` (Right $ SetCmd 1 "key" "value")
+    parse "get key\n" `shouldBe` (Right $ GetCmd "key")
+    parse "delete key\n" `shouldBe` (Right $ DelCmd "key")
 
   it "parses set requests with multi-word values" $
     parse "set 1 key value more values\n" `shouldSatisfy` isRight

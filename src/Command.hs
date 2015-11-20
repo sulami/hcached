@@ -23,7 +23,7 @@ import           LimitedHashMap
 data Command = SetCmd POSIXTime ByteString ByteString
              | GetCmd ByteString
              | DelCmd ByteString
-             deriving (Show)
+             deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
 executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
