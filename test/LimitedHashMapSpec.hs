@@ -51,7 +51,7 @@ spec = describe "LimitedHashMap" $ do
     it "recognizes non-existent keys" $
       get mlhm "1" `shouldReturn` Nothing
 
-    it "deletes the first set key when full" $ do
+    it "deletes the least recently set key when full" $ do
       set mlhm "1" "one" 10
       set mlhm "2" "two" 10
       set mlhm "3" "thr" 10
@@ -60,6 +60,18 @@ spec = describe "LimitedHashMap" $ do
       length (lhm^.mru) `shouldBe` 2
       get mlhm "1" `shouldReturn` Nothing
       get mlhm "2" `shouldReturn` Just "two"
+      get mlhm "3" `shouldReturn` Just "thr"
+
+    it "deletes the least recently gotten key when full" $ do
+      set mlhm "1" "one" 10
+      set mlhm "2" "two" 10
+      get mlhm "1"
+      set mlhm "3" "thr" 10
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 2
+      length (lhm^.mru) `shouldBe` 2
+      get mlhm "1" `shouldReturn` Just "one"
+      get mlhm "2" `shouldReturn` Nothing
       get mlhm "3" `shouldReturn` Just "thr"
 
     it "does not delete keys when updating existing ones" $ do

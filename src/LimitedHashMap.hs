@@ -3,6 +3,7 @@
 module LimitedHashMap where
 
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
+import           Control.Monad (when)
 
 import           Control.Lens ((^.), (%~), makeLenses, view)
 import           Data.ByteString (ByteString)
@@ -35,30 +36,21 @@ initialLHM msize = LimitedHashMap HML.empty msize []
 
 -- | Insert a new KVP
 set :: MVar LimitedHashMap -> ByteString -> ByteString -> POSIXTime -> IO ()
-set lhm k v t = modifyMVar_ lhm $ set' k v t
-
--- | Perform the actual insertion
-set' :: ByteString -> ByteString -> POSIXTime -> LimitedHashMap
-     -> IO LimitedHashMap
-set' k v t s =
-  let currentSize = HML.size $ s^.hashMap
-      -- TODO delete expired keys to make space if needed
-      isFull = currentSize == s^.maxSize
-      alreadyMember = HML.member k $ s^.hashMap
-      needsDeletion = isFull && not alreadyMember
-      delCandidate = head $ s^.mru
-  in do
-    value <- buildValue v t
-    return $ hashMap %~ HML.insert k value $
-     (if needsDeletion then mru %~ tail else id) $
-     (if needsDeletion then hashMap %~ HML.delete delCandidate else id) $
-     (mru %~ ((++ [k]) . (if alreadyMember then filter (/= k) else id))) s
-
--- | Construct a 'Value' and calculate its TTL
-buildValue :: ByteString -> POSIXTime -> IO Value
-buildValue val t = do
+set lhm k v t = do
   now <- getPOSIXTime
-  return $ Value val (now + t)
+  let value = Value v $ now + t
+  modifyMVar_ lhm $ \s -> do
+    let isFull = HML.size (s^.hashMap) >= s^.maxSize
+        alreadyMember = HML.member k $ s^.hashMap
+        needsDeletion = isFull && not alreadyMember
+        delCandidate = head $ s^.mru
+        addToMRU = if alreadyMember
+          then mru %~ ((++ [k]) . (filter (/= k)))
+          else mru %~ (++ [k])
+        performDeletion = if needsDeletion
+          then (mru %~ tail) . (hashMap %~ HML.delete delCandidate)
+          else id
+    return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe ByteString)
@@ -81,7 +73,7 @@ get' k s = HML.lookup k $ s^.hashMap
 
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
-updateMRU k lhm = return $ mru %~ (k :) . filter (/= k) $ lhm
+updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
 -- | Delete a KVP
 delete :: MVar LimitedHashMap -> ByteString -> IO ()
