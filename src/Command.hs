@@ -10,7 +10,7 @@ module Command (
 
 import           Control.Applicative ((<|>), (<*>), (<*), liftA)
 import           Control.Concurrent.MVar (MVar)
-import           Data.ByteString.Char8 (ByteString, unpack)
+import           Data.ByteString.Char8 (ByteString, append, unpack)
 
 import           Control.Lens ((^.))
 import qualified Data.Attoparsec.ByteString as AP
@@ -34,7 +34,7 @@ executeCommand lhm (GetCmd k) = do
   rv <- get lhm k
   case rv of
     Nothing  -> return "NOT_FOUND"
-    Just val -> return $ val^.value
+    Just val -> return . append "VALUE " $ val^.value
 executeCommand lhm (DelCmd k) = do
   rv <- get lhm k
   case rv of
