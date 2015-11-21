@@ -34,7 +34,7 @@ executeCommand lhm (GetCmd k) = do
   rv <- get lhm k
   case rv of
     Nothing  -> return "NOT_FOUND"
-    Just val -> return . append "VALUE " $ val^.value
+    Just val -> return . append "VALUE " $ val
 executeCommand lhm (DelCmd k) = do
   rv <- get lhm k
   case rv of

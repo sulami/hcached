@@ -4,7 +4,7 @@ module LimitedHashMap where
 
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
 
-import           Control.Lens ((^.), (%~), makeLenses)
+import           Control.Lens ((^.), (%~), makeLenses, view)
 import           Data.ByteString (ByteString)
 import qualified Data.HashMap.Lazy as HML
 import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
@@ -61,7 +61,7 @@ buildValue val t = do
   return $ Value val (now + t)
 
 -- | Query a value for a key
-get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
+get :: MVar LimitedHashMap -> ByteString -> IO (Maybe ByteString)
 get lhm k = do
   state <- readMVar lhm
   now <- getPOSIXTime
@@ -73,7 +73,7 @@ get lhm k = do
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
-        return $ get' k state
+        return (get' k state >>= (Just . view value))
 
 -- | Pure version of 'query' for testing
 get' :: ByteString -> LimitedHashMap -> Maybe Value
