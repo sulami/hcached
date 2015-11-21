@@ -3,7 +3,7 @@
 module CommandSpec where
 
 import           Control.Concurrent.MVar (newMVar)
-import           Data.Either (isLeft, isRight)
+import           Data.Either (isLeft)
 
 import           Test.Hspec
 
@@ -44,6 +44,4 @@ spec = do
       executeCommand lhm (DelCmd "key")          `shouldReturn` "DELETED"
       executeCommand lhm (GetCmd "key")          `shouldReturn` "NOT_FOUND"
       executeCommand lhm (DelCmd "key")          `shouldReturn` "NOT_FOUND"
-
-{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
