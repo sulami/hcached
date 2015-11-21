@@ -2,7 +2,7 @@
 
 module CommandSpec where
 
-import           Control.Concurrent.MVar (newMVar, readMVar)
+import           Control.Concurrent.MVar (newMVar)
 import           Data.Either (isLeft, isRight)
 
 import           Test.Hspec

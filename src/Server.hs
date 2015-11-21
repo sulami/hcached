@@ -9,7 +9,7 @@ module Server (
 
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
 import           Control.Monad (when)
-import qualified Data.ByteString.Char8 as C8
+import           Data.ByteString.Char8 (ByteString, append)
 
 import           Control.Lens (view)
 import           Network.Simple.TCP (
@@ -46,8 +46,8 @@ handle lhm (sock, remoteAddr) = do
           handle lhm (sock, remoteAddr)
 
 -- | Write an answer to a socket. Appends the correct line-ending
-answer :: Socket -> C8.ByteString -> IO ()
-answer sock msg = send sock $ C8.concat [msg, "\r\n"]
+answer :: Socket -> ByteString -> IO ()
+answer sock msg = send sock $ append msg "\r\n"
 
 -- | Print debug output if enabled
 debugP :: MVar LimitedHashMap -> String -> IO ()
