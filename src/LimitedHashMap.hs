@@ -52,7 +52,7 @@ set' k v t s =
     return $ hashMap %~ HML.insert k value $
      (if needsDeletion then mru %~ tail else id) $
      (if needsDeletion then hashMap %~ HML.delete delCandidate else id) $
-     (mru %~ (++ [k])) s
+     (mru %~ ((++ [k]) . (if alreadyMember then filter (/= k) else id))) s
 
 -- | Construct a 'Value' and calculate its TTL
 buildValue :: ByteString -> POSIXTime -> IO Value

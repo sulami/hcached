@@ -48,57 +48,36 @@ spec = describe "LimitedHashMap" $ do
         Nothing  -> assertFailure "Did not find deposited value"
         Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 59 && t <= 60)
 
-    -- it "recognizes non-existent keys" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   hm <- readMVar lhm
-    --   rv <- get lhm "2"
-    --   when (isJust rv) $ assertFailure "Return nonexistent key"
+    it "recognizes non-existent keys" $
+      get mlhm "1" `shouldReturn` Nothing
 
-    -- it "only saves the specified amount of KVPs" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   hm <- readMVar lhm
-    --   HML.size (hm^.hashMap) `shouldBe` 1
+    it "deletes the first set key when full" $ do
+      set mlhm "1" "one" 10
+      set mlhm "2" "two" 10
+      set mlhm "3" "thr" 10
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 2
+      length (lhm^.mru) `shouldBe` 2
+      get mlhm "1" `shouldReturn` Nothing
+      get mlhm "2" `shouldReturn` Just "two"
+      get mlhm "3" `shouldReturn` Just "thr"
 
-    -- it "deletes the first set key when full" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   set lhm "2" "two" 10
-    --   rv1 <- get lhm "1"
-    --   rv1 `shouldBe` Nothing
-    --   rv2 <- get lhm "2"
-    --   case rv2 of
-    --     Nothing  -> assertFailure "Empty result"
-    --     Just val -> val^.value `shouldBe` "two"
+    it "does not delete keys when updating existing ones" $ do
+      set mlhm "1" "one" 10
+      set mlhm "2" "two" 10
+      set mlhm "1" "uno" 10
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 2
+      length (lhm^.mru) `shouldBe` 2
+      get mlhm "1" `shouldReturn` Just "uno"
+      get mlhm "2" `shouldReturn` Just "two"
 
-    -- it "deletes the deleted key from the mru list" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   set lhm "2" "two" 10
-    --   hm <- readMVar lhm
-    --   hm^.mru `shouldBe` ["2"]
-
-    -- it "does not delete keys when replacing existing ones" $ do
-    --   lhm <- newMVar $ initialLHM 2
-    --   set lhm "1" "one" 10
-    --   set lhm "2" "two" 10
-    --   set lhm "1" "uno" 10
-    --   rv2 <- get lhm "2"
-    --   case rv2 of
-    --     Nothing  -> assertFailure "Empty result"
-    --     Just val -> val^.value `shouldBe` "two"
-    --   rv1 <- get lhm "1"
-    --   case rv1 of
-    --     Nothing  -> assertFailure "Empty result"
-    --     Just val -> val^.value `shouldBe` "uno"
-
-    -- it "updates the most recently used list to reflect queries" $ do
-    --   lhm <- newMVar $ initialLHM 2
-    --   set lhm "1" "one" 10
-    --   set lhm "2" "two" 10
-    --   rv <- readMVar lhm >>= updateMRU "1"
-    --   rv^.mru `shouldBe` ["1", "2"]
+    it "updates the most recently used list to reflect queries" $ do
+      set mlhm "1" "one" 10
+      set mlhm "2" "two" 10
+      set mlhm "1" "uno" 10
+      lhm <- readMVar mlhm
+      lhm^.mru `shouldBe` ["2","1"]
 
     -- it "does not return expired KVPs" $ do
     --   lhm <- newMVar $ initialLHM 1
