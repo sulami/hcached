@@ -6,7 +6,7 @@ import           Control.Concurrent.MVar (MVar, newMVar, readMVar, swapMVar)
 import           Control.Monad (when)
 import           Data.Maybe (isJust, isNothing)
 
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), view)
 import qualified Data.HashMap.Lazy as HML
 import           Data.Time.Clock.POSIX (getPOSIXTime)
 import           Test.Hspec
@@ -30,9 +30,23 @@ spec = describe "LimitedHashMap" $ do
       lhm^.maxSize `shouldBe` 2
       lhm^.mru `shouldBe` []
 
-    it "can set a key-value-pair" $ do
+    it "can set and get a key-value-pair" $ do
       set mlhm "1" "one" 10
       get mlhm "1" `shouldReturn` Just "one"
+
+    it "can set and get multiple key-value-pairs" $ do
+      set mlhm "1" "one" 10
+      set mlhm "2" "two" 10
+      get mlhm "1" `shouldReturn` Just "one"
+      get mlhm "2" `shouldReturn` Just "two"
+
+    it "sets the proper time-to-live" $ do
+      set mlhm "1" "one" 60
+      now <- getPOSIXTime
+      lhm <- readMVar mlhm
+      case get' "1" lhm of
+        Nothing  -> assertFailure "Did not find deposited value"
+        Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 59 && t <= 60)
 
     -- it "recognizes non-existent keys" $ do
     --   lhm <- newMVar $ initialLHM 1
@@ -85,15 +99,6 @@ spec = describe "LimitedHashMap" $ do
     --   set lhm "2" "two" 10
     --   rv <- readMVar lhm >>= updateMRU "1"
     --   rv^.mru `shouldBe` ["1", "2"]
-
-    -- it "sets the proper time-to-live" $ do
-    --   lhm <- newMVar $ initialLHM 2
-    --   set lhm "1" "one" 60
-    --   now <- getPOSIXTime
-    --   rv <- get lhm "1"
-    --   case rv of
-    --     Nothing  -> assertFailure "Empty result"
-    --     Just val -> val^.ttl - now `shouldSatisfy` (> 55)
 
     -- it "does not return expired KVPs" $ do
     --   lhm <- newMVar $ initialLHM 1
