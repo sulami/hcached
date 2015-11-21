@@ -8,7 +8,7 @@ import           Data.Either (isLeft)
 import           Test.Hspec
 
 import           Command (Command (..), executeCommand, parse)
-import           LimitedHashMap (initialState)
+import           LimitedHashMap (initialLHM)
 
 spec :: Spec
 spec = do
@@ -35,7 +35,7 @@ spec = do
     it "does not parse set commands with non-numerical TTLs" $
       parse "set 0xABC key value\n" `shouldSatisfy` isLeft
 
-  lhm <- runIO . newMVar $ initialState False 3
+  lhm <- runIO . newMVar $ initialLHM 3
 
   describe "Command Executer" $
     it "correctly executes commands and answers properly" $ do

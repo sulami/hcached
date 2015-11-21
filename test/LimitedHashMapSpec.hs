@@ -17,13 +17,13 @@ import           LimitedHashMap
 spec :: Spec
 spec = describe "LimitedHashMap" $ do
   it "sets the proper initial maximum size" $
-    initialState False 10^.maxSize `shouldBe` 10
+    initialLHM 10^.maxSize `shouldBe` 10
 
   it "sets the proper initial used list" $
-    initialState False 10^.mru `shouldBe` []
+    initialLHM 10^.mru `shouldBe` []
 
   it "can set a key-value-pair" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     rv <- get lhm "1"
     case rv of
@@ -31,20 +31,20 @@ spec = describe "LimitedHashMap" $ do
       Just val -> val^.value `shouldBe` "one"
 
   it "recognizes non-existent keys" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     hm <- readMVar lhm
     rv <- get lhm "2"
     when (isJust rv) $ assertFailure "Return nonexistent key"
 
   it "only saves the specified amount of KVPs" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     hm <- readMVar lhm
     HML.size (hm^.hashMap) `shouldBe` 1
 
   it "deletes the first set key when full" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     set lhm "2" "two" 10
     rv1 <- get lhm "1"
@@ -55,14 +55,14 @@ spec = describe "LimitedHashMap" $ do
       Just val -> val^.value `shouldBe` "two"
 
   it "deletes the deleted key from the mru list" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     set lhm "2" "two" 10
     hm <- readMVar lhm
     hm^.mru `shouldBe` ["2"]
 
   it "does not delete keys when replacing existing ones" $ do
-    lhm <- newMVar $ initialState False 2
+    lhm <- newMVar $ initialLHM 2
     set lhm "1" "one" 10
     set lhm "2" "two" 10
     set lhm "1" "uno" 10
@@ -76,14 +76,14 @@ spec = describe "LimitedHashMap" $ do
       Just val -> val^.value `shouldBe` "uno"
 
   it "updates the most recently used list to reflect queries" $ do
-    lhm <- newMVar $ initialState False 2
+    lhm <- newMVar $ initialLHM 2
     set lhm "1" "one" 10
     set lhm "2" "two" 10
     rv <- readMVar lhm >>= updateMRU "1"
     rv^.mru `shouldBe` ["1", "2"]
 
   it "sets the proper time-to-live" $ do
-    lhm <- newMVar $ initialState False 2
+    lhm <- newMVar $ initialLHM 2
     set lhm "1" "one" 60
     now <- getPOSIXTime
     rv <- get lhm "1"
@@ -92,13 +92,13 @@ spec = describe "LimitedHashMap" $ do
       Just val -> val^.ttl - now `shouldSatisfy` (> 55)
 
   it "does not return expired KVPs" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" (-1)
     rv <- get lhm "1"
     when (isJust rv) $ assertFailure "Expired value returned"
 
   it "can delete a KVP from both the hashmap and the mru" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 0
     hm0 <- readMVar lhm
     HML.size (hm0^.hashMap) `shouldBe` 1
@@ -111,7 +111,7 @@ spec = describe "LimitedHashMap" $ do
     when (isJust rv) $ assertFailure "Deleted value returned"
 
   it "deletes expired KVPs when encountered" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" (-1)
     hm0 <- readMVar lhm
     HML.size (hm0^.hashMap) `shouldBe` 1
@@ -123,7 +123,7 @@ spec = describe "LimitedHashMap" $ do
     length (hm1^.mru) `shouldBe` 0
 
   it "deletes a KVP when ordered to" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     hm0 <- readMVar lhm
     HML.size (hm0^.hashMap) `shouldBe` 1
@@ -136,7 +136,7 @@ spec = describe "LimitedHashMap" $ do
     length (hm1^.mru) `shouldBe` 0
 
   it "does not delete any KVP if the desired one does not exist" $ do
-    lhm <- newMVar $ initialState False 1
+    lhm <- newMVar $ initialLHM 1
     set lhm "1" "one" 10
     hm0 <- readMVar lhm
     HML.size (hm0^.hashMap) `shouldBe` 1

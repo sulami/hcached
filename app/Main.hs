@@ -2,8 +2,7 @@ module Main where
 
 import           Options (Options, defineOptions, runCommand, simpleOption)
 
-import           LimitedHashMap (initialState)
-import           Server (runServer)
+import           Server (initialState, runServer)
 
 -- | Possible command-line options.
 data MainOptions = MainOptions
@@ -24,5 +23,6 @@ instance Options MainOptions where
 -- | Main entry point.
 main :: IO ()
 main = runCommand $ \opts args -> do
-  runServer (initialState (optDebug opts) (optSize opts)) $ optPort opts
+  state <- initialState (optDebug opts) (optSize opts)
+  runServer state $ optPort opts
 
