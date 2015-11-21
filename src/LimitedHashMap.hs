@@ -67,7 +67,7 @@ get lhm k = do
         modifyMVar_ lhm $ updateMRU k
         return (get' k state >>= (Just . view value))
 
--- | Pure version of 'query' for testing
+-- | Pure version of get for testing
 get' :: ByteString -> LimitedHashMap -> Maybe Value
 get' k s = HML.lookup k $ s^.hashMap
 

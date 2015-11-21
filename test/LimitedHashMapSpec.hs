@@ -91,62 +91,32 @@ spec = describe "LimitedHashMap" $ do
       lhm <- readMVar mlhm
       lhm^.mru `shouldBe` ["2","1"]
 
-    -- it "does not return expired KVPs" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" (-1)
-    --   rv <- get lhm "1"
-    --   when (isJust rv) $ assertFailure "Expired value returned"
+    it "does not return expired KVPs" $ do
+      set mlhm "1" "one" (-1)
+      get mlhm "1" `shouldReturn` Nothing
 
-    -- it "can delete a KVP from both the hashmap and the mru" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 0
-    --   hm0 <- readMVar lhm
-    --   HML.size (hm0^.hashMap) `shouldBe` 1
-    --   length (hm0^.mru) `shouldBe` 1
-    --   delete lhm "1"
-    --   hm1 <- readMVar lhm
-    --   HML.size (hm1^.hashMap) `shouldBe` 0
-    --   length (hm1^.mru) `shouldBe` 0
-    --   rv <- get lhm "1"
-    --   when (isJust rv) $ assertFailure "Deleted value returned"
+    it "can delete a KVP from both the hashmap and the mru" $ do
+      set mlhm "1" "one" 10
+      delete mlhm "1"
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 0
+      length (lhm^.mru) `shouldBe` 0
+      get mlhm "1" `shouldReturn` Nothing
 
-    -- it "deletes expired KVPs when encountered" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" (-1)
-    --   hm0 <- readMVar lhm
-    --   HML.size (hm0^.hashMap) `shouldBe` 1
-    --   length (hm0^.mru) `shouldBe` 1
-    --   rv <- get lhm "1"
-    --   when (isJust rv) $ assertFailure "Expired value returned"
-    --   hm1 <- readMVar lhm
-    --   HML.size (hm1^.hashMap) `shouldBe` 0
-    --   length (hm1^.mru) `shouldBe` 0
+    it "does not delete any KVP if the desired one does not exist" $ do
+      set mlhm "1" "one" 10
+      delete mlhm "2"
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 1
+      length (lhm^.mru) `shouldBe` 1
+      get mlhm "1" `shouldReturn` Just "one"
 
-    -- it "deletes a KVP when ordered to" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   hm0 <- readMVar lhm
-    --   HML.size (hm0^.hashMap) `shouldBe` 1
-    --   length (hm0^.mru) `shouldBe` 1
-    --   delete lhm "1"
-    --   rv <- get lhm "1"
-    --   when (isJust rv) $ assertFailure "Deleted value returned"
-    --   hm1 <- readMVar lhm
-    --   HML.size (hm1^.hashMap) `shouldBe` 0
-    --   length (hm1^.mru) `shouldBe` 0
-
-    -- it "does not delete any KVP if the desired one does not exist" $ do
-    --   lhm <- newMVar $ initialLHM 1
-    --   set lhm "1" "one" 10
-    --   hm0 <- readMVar lhm
-    --   HML.size (hm0^.hashMap) `shouldBe` 1
-    --   length (hm0^.mru) `shouldBe` 1
-    --   delete lhm "2"
-    --   rv <- get lhm "1"
-    --   when (isNothing rv) $ assertFailure "No value returned"
-    --   hm1 <- readMVar lhm
-    --   HML.size (hm1^.hashMap) `shouldBe` 1
-    --   length (hm1^.mru) `shouldBe` 1
+    it "deletes expired KVPs when encountered" $ do
+      set mlhm "1" "one" (-1)
+      get mlhm "1" `shouldReturn` Nothing
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 0
+      length (lhm^.mru) `shouldBe` 0
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
