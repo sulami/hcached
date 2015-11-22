@@ -9,7 +9,7 @@ import           Test.Hspec
 import           Server (initialState, runServer)
 
 spec :: Spec
-spec = describe "Server" $ do
+spec = do
   istate <- runIO $ initialState False 3
   runIO . forkIO $ runServer istate 11212
 

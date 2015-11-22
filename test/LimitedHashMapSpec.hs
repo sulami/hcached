@@ -21,7 +21,7 @@ resetLHM mv = do
   return ()
 
 spec :: Spec
-spec = describe "LimitedHashMap" $ do
+spec = do
   mlhm <- runIO . newMVar $ initialLHM 2
   before_ (resetLHM mlhm) $ do
 
