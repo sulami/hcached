@@ -16,7 +16,7 @@ import           Server (initialState, janitor, lhm, runServer)
 
 spec :: Spec
 spec = do
-  istate <- runIO $ initialState False 1 3
+  istate <- runIO $ initialState False 0 3
 
   describe "Exposed Interface" $ do
     runIO . forkIO $ runServer istate 11212
@@ -36,7 +36,7 @@ spec = do
       set mlhm "one" "1" (-1)
       hmBefore <- readMVar mlhm
       get' hmBefore "one" `shouldSatisfy` isJust
-      threadDelay 1000000 -- wait a second
+      threadDelay 1000
       hmAfter <- readMVar mlhm
       get' hmAfter "one" `shouldBe` Nothing
 
