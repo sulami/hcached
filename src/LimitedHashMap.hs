@@ -45,7 +45,7 @@ set lhm k v t = do
         needsDeletion = isFull && not alreadyMember
         delCandidate = head $ s^.mru
         addToMRU = if alreadyMember
-          then mru %~ ((++ [k]) . (filter (/= k)))
+          then mru %~ ((++ [k]) . filter (/= k))
           else mru %~ (++ [k])
         performDeletion = if needsDeletion
           then (mru %~ tail) . (hashMap %~ HML.delete delCandidate)
