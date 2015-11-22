@@ -4,10 +4,9 @@
 -- | This module handles setting up the server and handling client requests,
 -- functioning as the core that connects all components.
 
-module Server (
-  initialState, runServer
-) where
+module Server where
 
+import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
 import           Control.Monad (when)
 import           Data.ByteString.Char8 (ByteString, append)
@@ -18,26 +17,28 @@ import           Network.Simple.TCP (
   )
 
 import           Command
-import           LimitedHashMap (LimitedHashMap, initialLHM)
+import           LimitedHashMap (LimitedHashMap, cleanup, initialLHM)
 
 -- | Hold all state that the server has
 data ServerState = ServerState
   { _debug :: !Bool                  -- ^ Debug output?
+  , _cui   :: !Int                   -- ^ Janitor cleanup interval in seconds
   , _lhm   :: !(MVar LimitedHashMap) -- ^ The hashmap
   }
 
 makeLenses ''ServerState
 
 -- | Set up the initial state
-initialState :: Bool -> Int -> IO ServerState
-initialState dbg size = do
+initialState :: Bool -> Int -> Int -> IO ServerState
+initialState dbg cui size = do
   lhm <- newMVar $ initialLHM size
-  return $ ServerState dbg lhm
+  return $ ServerState dbg cui lhm
 
 -- | Run the server on the specified port
 runServer :: ServerState -> Word -> IO ()
 runServer state port = do
   mst <- newMVar state
+  forkIO $ janitor mst
   debugP mst $ "Listening on port " ++ show port
   serve (Host "127.0.0.1") (show port) $ handle mst
 
@@ -60,6 +61,14 @@ handle state (sock, remoteAddr) = do
           result <- executeCommand lhm c
           answer sock result
           handle state (sock, remoteAddr)
+
+-- | Perdiodically clean the LHM in a seperate thread
+janitor :: MVar ServerState -> IO ()
+janitor state = do
+  s <- readMVar state
+  cleanup $ view lhm s
+  threadDelay $ view cui s * 1000000
+  janitor state
 
 -- | Write an answer to a socket. Appends the correct line-ending
 answer :: Socket -> ByteString -> IO ()

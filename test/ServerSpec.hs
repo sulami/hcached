@@ -10,7 +10,7 @@ import           Server (initialState, runServer)
 
 spec :: Spec
 spec = do
-  istate <- runIO $ initialState False 3
+  istate <- runIO $ initialState False 60 3
   runIO . forkIO $ runServer istate 11212
 
   it "answers to requests on its port" $ do
