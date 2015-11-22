@@ -57,7 +57,8 @@ get :: MVar LimitedHashMap -> ByteString -> IO (Maybe ByteString)
 get lhm k = do
   state <- readMVar lhm
   now <- getPOSIXTime
-  case get' k state of
+  let rv = get' state k
+  case rv of
     Nothing  -> return Nothing
     Just val -> if val^.ttl < now
       then do
@@ -65,11 +66,11 @@ get lhm k = do
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
-        return (get' k state >>= (Just . view value))
+        return $ Just . view value =<< rv
 
 -- | Pure version of get for testing
-get' :: ByteString -> LimitedHashMap -> Maybe Value
-get' k s = HML.lookup k $ s^.hashMap
+get' :: LimitedHashMap -> ByteString -> Maybe Value
+get' s k = HML.lookup k $ s^.hashMap
 
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap

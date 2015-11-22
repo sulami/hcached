@@ -44,7 +44,7 @@ spec = do
       set mlhm "1" "one" 60
       now <- getPOSIXTime
       lhm <- readMVar mlhm
-      case get' "1" lhm of
+      case get' lhm "1" of
         Nothing  -> assertFailure "Did not find deposited value"
         Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 59 && t <= 60)
 
