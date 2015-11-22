@@ -118,5 +118,14 @@ spec = do
       HML.size (lhm^.hashMap) `shouldBe` 0
       length (lhm^.mru) `shouldBe` 0
 
+    it "cleans up expired KVPs when ordered to" $ do
+      set mlhm "1" "one" (-1)
+      set mlhm "2" "two" 10
+      cleanup mlhm
+      get mlhm "2" `shouldReturn` Just "two"
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 1
+      length (lhm^.mru) `shouldBe` 1
+
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

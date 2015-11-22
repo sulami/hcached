@@ -3,7 +3,7 @@
 module LimitedHashMap where
 
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
-import           Control.Monad (when)
+import           Control.Monad (forM_, when)
 
 import           Control.Lens ((^.), (%~), makeLenses, view)
 import           Data.ByteString (ByteString)
@@ -80,4 +80,13 @@ delete :: MVar LimitedHashMap -> ByteString -> IO ()
 delete lhm k = do
   modifyMVar_ lhm (return . (hashMap %~ HML.delete k))
   modifyMVar_ lhm (return . (mru %~ filter (/= k)))
+
+-- | Remove all expired KVPs from the LHM
+cleanup :: MVar LimitedHashMap -> IO ()
+cleanup lhm = do
+  s <- readMVar lhm
+  now <- getPOSIXTime
+  let isExpired k v = now > v^.ttl
+      toBeDeleted = HML.keys . HML.filterWithKey isExpired $ view hashMap s
+  forM_ toBeDeleted $ delete lhm
 
