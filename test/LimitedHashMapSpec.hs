@@ -41,12 +41,16 @@ spec = do
       get mlhm "2" `shouldReturn` Just "two"
 
     it "sets the proper time-to-live" $ do
-      set mlhm "1" "one" 60
       now <- getPOSIXTime
+      set mlhm "1" "one" 60
+      set mlhm "2" "two" $ now + 10 -- Large values are considered unix time
       lhm <- readMVar mlhm
       case get' lhm "1" of
         Nothing  -> assertFailure "Did not find deposited value"
         Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 59 && t <= 60)
+      case get' lhm "2" of
+        Nothing  -> assertFailure "Did not find deposited value"
+        Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 9 && t <= 10)
 
     it "recognizes non-existent keys" $
       get mlhm "1" `shouldReturn` Nothing

@@ -38,7 +38,8 @@ initialLHM msize = LimitedHashMap HML.empty msize []
 set :: MVar LimitedHashMap -> ByteString -> ByteString -> POSIXTime -> IO ()
 set lhm k v t = do
   now <- getPOSIXTime
-  let value = Value v $ now + t
+  let value | t >= 60*60*24*30 = Value v t
+            | otherwise        = Value v $ now + t
   modifyMVar_ lhm $ \s -> do
     let isFull = HML.size (s^.hashMap) >= s^.maxSize
         alreadyMember = HML.member k $ s^.hashMap
