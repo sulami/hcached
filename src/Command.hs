@@ -77,8 +77,12 @@ setParser :: CommandParser
 setParser = SetCmd
   <$> (liftA toPosixTime . AP.takeWhile $ AP.inClass "0-9") <* char8 ' '
   <*> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* char8 ' '
-  <*> AP.takeWhile1 (\c -> c /= 13 && c /= 10) <* endOfLine
+  <*> (AP.take =<< contentSize) <* endOfLine
   where
+    contentSize :: AP.Parser Int
+    contentSize = read . unpack
+      <$> AP.takeWhile1 (AP.inClass "0-9") <* char8 ' '
+
     toPosixTime :: ByteString -> POSIXTime
     toPosixTime = realToFrac . read . unpack
 

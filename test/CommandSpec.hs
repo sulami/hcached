@@ -14,13 +14,17 @@ spec :: Spec
 spec = do
   describe "Command Parser" $ do
     it "parses basic valid commands" $ do
-      parse "set 1 key value\n" `shouldBe` (Right $ SetCmd 1 "key" "value")
+      parse "set 1 key 5 value\n" `shouldBe` (Right $ SetCmd 1 "key" "value")
       parse "get key\n" `shouldBe` (Right $ GetCmd "key")
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key")
 
     it "parses set requests with multi-word values" $
-      parse "set 1 key value more values\n"
+      parse "set 1 key 17 value more values\n"
         `shouldBe` (Right $ SetCmd 1 "key" "value more values")
+
+    it "does not parse invalid content sizes" $ do
+      parse "set 1 key 4 value\n" `shouldSatisfy` isLeft
+      parse "set 1 key 6 value\n" `shouldSatisfy` isLeft
 
     it "does not parse empty requests" $
       parse "\n" `shouldSatisfy` isLeft
