@@ -50,7 +50,7 @@ spec = do
   describe "Command Executer" $
     it "correctly answers to commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 "val") `shouldReturn` "STORED"
-      executeCommand lhm (GetCmd "key")            `shouldReturn` "VALUE val"
+      executeCommand lhm (GetCmd "key")            `shouldReturn` "VALUE 0 val"
       executeCommand lhm (DelCmd "key")            `shouldReturn` "DELETED"
       executeCommand lhm (GetCmd "key")            `shouldReturn` "NOT_FOUND"
       executeCommand lhm (DelCmd "key")            `shouldReturn` "NOT_FOUND"

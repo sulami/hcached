@@ -33,8 +33,8 @@ spec = do
     it "can set and get multiple key-value-pairs" $ do
       set mlhm "1" 0 10 "one"
       set mlhm "2" 7 10 "two"
-      get mlhm "1" `shouldReturn` Just "one"
-      get mlhm "2" `shouldReturn` Just "two"
+      get mlhm "1" `shouldReturn` Just (0, "one")
+      get mlhm "2" `shouldReturn` Just (7, "two")
 
     it "sets the proper time-to-live" $ do
       now <- getPOSIXTime
@@ -59,8 +59,8 @@ spec = do
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
       get mlhm "1" `shouldReturn` Nothing
-      get mlhm "2" `shouldReturn` Just "two"
-      get mlhm "3" `shouldReturn` Just "thr"
+      get mlhm "2" `shouldReturn` Just (0, "two")
+      get mlhm "3" `shouldReturn` Just (0, "thr")
 
     it "deletes the least recently gotten key when full" $ do
       set mlhm "1" 0 10 "one"
@@ -70,9 +70,9 @@ spec = do
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
-      get mlhm "1" `shouldReturn` Just "one"
+      get mlhm "1" `shouldReturn` Just (0, "one")
       get mlhm "2" `shouldReturn` Nothing
-      get mlhm "3" `shouldReturn` Just "thr"
+      get mlhm "3" `shouldReturn` Just (0, "thr")
 
     it "does not delete keys when updating existing ones" $ do
       set mlhm "1" 0 10 "one"
@@ -81,8 +81,8 @@ spec = do
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
-      get mlhm "1" `shouldReturn` Just "uno"
-      get mlhm "2" `shouldReturn` Just "two"
+      get mlhm "1" `shouldReturn` Just (0, "uno")
+      get mlhm "2" `shouldReturn` Just (0, "two")
 
     it "updates the most recently used list to reflect queries" $ do
       set mlhm "1" 0 10 "one"
@@ -109,7 +109,7 @@ spec = do
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 1
       length (lhm^.mru) `shouldBe` 1
-      get mlhm "1" `shouldReturn` Just "one"
+      get mlhm "1" `shouldReturn` Just (0, "one")
 
     it "deletes expired KVPs when encountered" $ do
       set mlhm "1" 0 (-1) "one"
@@ -122,7 +122,7 @@ spec = do
       set mlhm "1" 0 (-1) "one"
       set mlhm "2" 0 10 "two"
       cleanup mlhm
-      get mlhm "2" `shouldReturn` Just "two"
+      get mlhm "2" `shouldReturn` Just (0, "two")
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 1
       length (lhm^.mru) `shouldBe` 1

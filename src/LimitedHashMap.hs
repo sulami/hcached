@@ -2,6 +2,7 @@
 
 module LimitedHashMap where
 
+import           Control.Arrow ((&&&))
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
 import           Control.Monad (forM_, when)
 
@@ -56,7 +57,7 @@ set lhm k f t v = do
     return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
 
 -- | Query a value for a key
-get :: MVar LimitedHashMap -> ByteString -> IO (Maybe ByteString)
+get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
 get lhm k = do
   state <- readMVar lhm
   now <- getPOSIXTime
@@ -69,7 +70,7 @@ get lhm k = do
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
-        return $ Just . view value =<< rv
+        return $ Just . (view flags &&& view value) =<< rv
 
 -- | Pure version of get for testing
 get' :: LimitedHashMap -> ByteString -> Maybe Value
