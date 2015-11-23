@@ -13,6 +13,7 @@ import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 -- | Data that is stored together with a value
 data Value = Value
   { _value :: !ByteString -- ^ The actual value as supplied
+  , _flags :: !Int        -- ^ Arbitrary flags
   , _ttl   :: !POSIXTime  -- ^ The time to live of this KVP
   } deriving (Show)
 
@@ -35,11 +36,12 @@ initialLHM :: Int -> LimitedHashMap
 initialLHM msize = LimitedHashMap HML.empty msize []
 
 -- | Insert a new KVP
-set :: MVar LimitedHashMap -> ByteString -> POSIXTime -> ByteString -> IO ()
-set lhm k t v = do
+set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
+    -> IO ()
+set lhm k f t v = do
   now <- getPOSIXTime
-  let value | t >= 60*60*24*30 = Value v t
-            | otherwise        = Value v $ now + t
+  let value | t >= 60*60*24*30 = Value v f t
+            | otherwise        = Value v f $ now + t
   modifyMVar_ lhm $ \s -> do
     let isFull = HML.size (s^.hashMap) >= s^.maxSize
         alreadyMember = HML.member k $ s^.hashMap

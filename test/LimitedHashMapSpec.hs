@@ -30,20 +30,16 @@ spec = do
       lhm^.maxSize `shouldBe` 2
       lhm^.mru `shouldBe` []
 
-    it "can set and get a key-value-pair" $ do
-      set mlhm "1" 10 "one"
-      get mlhm "1" `shouldReturn` Just "one"
-
     it "can set and get multiple key-value-pairs" $ do
-      set mlhm "1" 10 "one"
-      set mlhm "2" 10 "two"
+      set mlhm "1" 0 10 "one"
+      set mlhm "2" 7 10 "two"
       get mlhm "1" `shouldReturn` Just "one"
       get mlhm "2" `shouldReturn` Just "two"
 
     it "sets the proper time-to-live" $ do
       now <- getPOSIXTime
-      set mlhm "1" 60 "one"
-      set mlhm "2" (now + 10) "two" -- Large values are considered unix time
+      set mlhm "1" 0 60 "one"
+      set mlhm "2" 0 (now + 10) "two" -- Large values are considered unix time
       lhm <- readMVar mlhm
       case get' lhm "1" of
         Nothing  -> assertFailure "Did not find deposited value"
@@ -56,9 +52,9 @@ spec = do
       get mlhm "1" `shouldReturn` Nothing
 
     it "deletes the least recently set key when full" $ do
-      set mlhm "1" 10 "one"
-      set mlhm "2" 10 "two"
-      set mlhm "3" 10 "thr"
+      set mlhm "1" 0 10 "one"
+      set mlhm "2" 0 10 "two"
+      set mlhm "3" 0 10 "thr"
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
@@ -67,10 +63,10 @@ spec = do
       get mlhm "3" `shouldReturn` Just "thr"
 
     it "deletes the least recently gotten key when full" $ do
-      set mlhm "1" 10 "one"
-      set mlhm "2" 10 "two"
+      set mlhm "1" 0 10 "one"
+      set mlhm "2" 0 10 "two"
       get mlhm "1"
-      set mlhm "3" 10 "thr"
+      set mlhm "3" 0 10 "thr"
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
@@ -79,9 +75,9 @@ spec = do
       get mlhm "3" `shouldReturn` Just "thr"
 
     it "does not delete keys when updating existing ones" $ do
-      set mlhm "1" 10 "one"
-      set mlhm "2" 10 "two"
-      set mlhm "1" 10 "uno"
+      set mlhm "1" 0 10 "one"
+      set mlhm "2" 0 10 "two"
+      set mlhm "1" 0 10 "uno"
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 2
       length (lhm^.mru) `shouldBe` 2
@@ -89,18 +85,18 @@ spec = do
       get mlhm "2" `shouldReturn` Just "two"
 
     it "updates the most recently used list to reflect queries" $ do
-      set mlhm "1" 10 "one"
-      set mlhm "2" 10 "two"
-      set mlhm "1" 10 "uno"
+      set mlhm "1" 0 10 "one"
+      set mlhm "2" 0 10 "two"
+      set mlhm "1" 0 10 "uno"
       lhm <- readMVar mlhm
       lhm^.mru `shouldBe` ["2","1"]
 
     it "does not return expired KVPs" $ do
-      set mlhm "1" (-1) "one"
+      set mlhm "1" 0 (-1) "one"
       get mlhm "1" `shouldReturn` Nothing
 
     it "can delete a KVP from both the hashmap and the mru" $ do
-      set mlhm "1" 10 "one"
+      set mlhm "1" 0 10 "one"
       delete mlhm "1"
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 0
@@ -108,7 +104,7 @@ spec = do
       get mlhm "1" `shouldReturn` Nothing
 
     it "does not delete any KVP if the desired one does not exist" $ do
-      set mlhm "1" 10 "one"
+      set mlhm "1" 0 10 "one"
       delete mlhm "2"
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 1
@@ -116,15 +112,15 @@ spec = do
       get mlhm "1" `shouldReturn` Just "one"
 
     it "deletes expired KVPs when encountered" $ do
-      set mlhm "1" (-1) "one"
+      set mlhm "1" 0 (-1) "one"
       get mlhm "1" `shouldReturn` Nothing
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 0
       length (lhm^.mru) `shouldBe` 0
 
     it "cleans up expired KVPs when ordered to" $ do
-      set mlhm "1" (-1) "one"
-      set mlhm "2" 10 "two"
+      set mlhm "1" 0 (-1) "one"
+      set mlhm "2" 0 10 "two"
       cleanup mlhm
       get mlhm "2" `shouldReturn` Just "two"
       lhm <- readMVar mlhm
