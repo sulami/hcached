@@ -44,20 +44,22 @@ There are currently three implemented commands:
 
 ### set
 
-    set <ttl> <key> <value-size> <value>
+    set <key> <flags> <ttl> <value-size> <value>
 
 sets a key-value pair
 
-- ttl is the maximum time to live for this value, after which it will be
-  discarded. It can be relative in seconds or absolute in UNIX time (even
-  seconds only, no punctuation).
-- key is the key under which the value will be saved. It needs to be a single
+- `key` is the key under which the value will be saved. It needs to be a single
   word, that is without spaces, and can contain all ASCII values between 33 and
   126.
-- value-size is the size of the value in bytes. It needs to match in order for
-  the command to be valid.
-- value is the value to set. It can contain arbitrary content as long as it is
-  exactly as long as specified
+- `flags` is an arbitrary integer written out in decimal for storing metadata.
+  It is not utilized by hcached in any way.
+- `ttl` is the maximum time to live for this value, after which it will be
+  discarded. It can be relative in seconds or absolute in UNIX time (even
+  seconds only, no punctuation).
+- `value-size` is the size of the value in bytes. It needs to match in order
+  for the command to be valid.
+- `value` is the value to set. It can contain arbitrary content as long as it
+  is exactly as long as specified
 
 Possible answers are:
 
@@ -69,7 +71,7 @@ Possible answers are:
 
 gets a value for a given key
 
-- key is the key to lookup. The same restrictions apply as for `set`.
+- `key` is the key to lookup. The same restrictions apply as for `set`.
 
 Possible answers are:
 
@@ -83,7 +85,7 @@ Possible answers are:
 
 forces deletion of a key-value-pair
 
-- key is the key to delete. The same restrictions apply as for `set`.
+- `key` is the key to delete. The same restrictions apply as for `set`.
 
 Possible answers are:
 
