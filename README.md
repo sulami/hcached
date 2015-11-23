@@ -8,6 +8,24 @@ of the table can be specified at startup. When the size limit is reached,
 hcached discards the least recently used key-value-pairs first to make space
 for new ones.
 
+### Memcached-compability
+
+[x] - `set`
+[ ] - `add`
+[ ] - `replace`
+[ ] - `append`
+[ ] - `prepend`
+[ ] - `cas`
+[x] - `get`
+[ ] - `gets`
+[x] - `delete`
+[ ] - `incr`/`decr`
+[ ] - `touch`
+[ ] - `stats`
+[ ] - `flush_all`
+[ ] - `version`
+[ ] - `quit`
+
 Installing
 ----------
 
