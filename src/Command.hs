@@ -84,8 +84,7 @@ setParser = SetCmd
     isToken w = w >= 33 && w <= 126
 
     contentSize :: AP.Parser Int
-    contentSize = read . unpack
-      <$> AP.takeWhile1 isNumber <* char8 ' '
+    contentSize = read . unpack <$> AP.takeWhile1 isNumber <* char8 ' '
 
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
