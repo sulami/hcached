@@ -10,21 +10,21 @@ for new ones.
 
 ### Memcached-compability
 
-[x] - `set`
-[ ] - `add`
-[ ] - `replace`
-[ ] - `append`
-[ ] - `prepend`
-[ ] - `cas`
-[x] - `get`
-[ ] - `gets`
-[x] - `delete`
-[ ] - `incr`/`decr`
-[ ] - `touch`
-[ ] - `stats`
-[ ] - `flush_all`
-[ ] - `version`
-[ ] - `quit`
+- [x] `set`
+- [ ] `add`
+- [ ] `replace`
+- [ ] `append`
+- [ ] `prepend`
+- [ ] `cas`
+- [x] `get`
+- [ ] `gets`
+- [x] `delete`
+- [ ] `incr`/`decr`
+- [ ] `touch`
+- [ ] `stats`
+- [ ] `flush_all`
+- [ ] `version`
+- [ ] `quit`
 
 Installing
 ----------
