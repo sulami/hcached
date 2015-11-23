@@ -21,15 +21,15 @@ import           Data.Time.Clock.POSIX (POSIXTime)
 import           LimitedHashMap
 
 -- | The possible commands and their structure
-data Command = SetCmd POSIXTime ByteString ByteString
+data Command = SetCmd ByteString POSIXTime ByteString
              | GetCmd ByteString
              | DelCmd ByteString
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
 executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
-executeCommand lhm (SetCmd t k v) = do
-  set lhm k v t
+executeCommand lhm (SetCmd k t v) = do
+  set lhm k t v
   return "STORED"
 executeCommand lhm (GetCmd k) = do
   rv <- get lhm k
@@ -79,8 +79,8 @@ useParser parser msg = do
 -- | Set a key-value-pair
 setParser :: CommandParser
 setParser = SetCmd
-  <$> liftA toPosixTime (AP.takeWhile1 isNumber) <* char8 ' '
-  <*> AP.takeWhile1 isToken <* char8 ' '
+  <$> AP.takeWhile1 isToken <* char8 ' '
+  <*> liftA toPosixTime (AP.takeWhile1 isNumber) <* char8 ' '
   <*> (AP.take =<< contentSize) <* endOfLine
   where
     contentSize :: AP.Parser Int

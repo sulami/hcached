@@ -33,7 +33,7 @@ spec = do
 
     it "cleans up regularly" $ do
       mlhm <- view lhm <$> readMVar mst
-      set mlhm "one" "1" (-1)
+      set mlhm "one" (-1) "1"
       hmBefore <- readMVar mlhm
       get' hmBefore "one" `shouldSatisfy` isJust
       threadDelay 1000

@@ -35,8 +35,8 @@ initialLHM :: Int -> LimitedHashMap
 initialLHM msize = LimitedHashMap HML.empty msize []
 
 -- | Insert a new KVP
-set :: MVar LimitedHashMap -> ByteString -> ByteString -> POSIXTime -> IO ()
-set lhm k v t = do
+set :: MVar LimitedHashMap -> ByteString -> POSIXTime -> ByteString -> IO ()
+set lhm k t v = do
   now <- getPOSIXTime
   let value | t >= 60*60*24*30 = Value v t
             | otherwise        = Value v $ now + t
