@@ -75,7 +75,7 @@ gets a value for a given key
 
 Possible answers are:
 
-    VALUE <value>
+    VALUE <flags> <value>
 
     NOT_FOUND
 
