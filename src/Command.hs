@@ -63,7 +63,10 @@ parse msg = do
 
 -- | Parse the initial command word
 commandParser :: AP.Parser ByteString
-commandParser = AP.takeWhile1 (AP.inClass "a-z") <* char8 ' '
+commandParser = AP.takeWhile1 isLowercaseChar <* char8 ' '
+  where
+    isLowercaseChar :: Word8 -> Bool
+    isLowercaseChar w = w >= 97 && w <= 122
 
 -- | Use a parser to try to parse a command
 useParser :: CommandParser -> ByteString -> CommandParseResult
@@ -80,9 +83,6 @@ setParser = SetCmd
   <*> AP.takeWhile1 isToken <* char8 ' '
   <*> (AP.take =<< contentSize) <* endOfLine
   where
-    isToken :: Word8 -> Bool
-    isToken w = w >= 33 && w <= 126
-
     contentSize :: AP.Parser Int
     contentSize = read . unpack <$> AP.takeWhile1 isNumber <* char8 ' '
 
@@ -94,9 +94,13 @@ setParser = SetCmd
 
 -- | Get a value for a key
 getParser :: CommandParser
-getParser = GetCmd <$> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* endOfLine
+getParser = GetCmd <$> AP.takeWhile1 isToken <* endOfLine
 
 -- | Delete a KVP
 delParser :: CommandParser
-delParser = DelCmd <$> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* endOfLine
+delParser = DelCmd <$> AP.takeWhile1 isToken <* endOfLine
+
+-- | Is a 'Word8' part of the accepted set of characters?
+isToken :: Word8 -> Bool
+isToken w = w >= 33 && w <= 126
 
