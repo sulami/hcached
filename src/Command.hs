@@ -11,6 +11,7 @@ module Command (
 import           Control.Applicative ((<|>), (<*>), (<*), liftA)
 import           Control.Concurrent.MVar (MVar)
 import           Data.ByteString.Char8 (ByteString, append, unpack)
+import           Data.Word (Word8)
 
 import           Control.Lens ((^.))
 import qualified Data.Attoparsec.ByteString as AP
@@ -75,13 +76,19 @@ useParser parser msg = do
 -- | Set a key-value-pair
 setParser :: CommandParser
 setParser = SetCmd
-  <$> (liftA toPosixTime . AP.takeWhile $ AP.inClass "0-9") <* char8 ' '
-  <*> AP.takeWhile1 (AP.inClass "a-zA-Z0-9") <* char8 ' '
+  <$> liftA toPosixTime (AP.takeWhile1 isNumber) <* char8 ' '
+  <*> AP.takeWhile1 isToken <* char8 ' '
   <*> (AP.take =<< contentSize) <* endOfLine
   where
+    isToken :: Word8 -> Bool
+    isToken w = w >= 33 && w <= 126
+
     contentSize :: AP.Parser Int
     contentSize = read . unpack
-      <$> AP.takeWhile1 (AP.inClass "0-9") <* char8 ' '
+      <$> AP.takeWhile1 isNumber <* char8 ' '
+
+    isNumber :: Word8 -> Bool
+    isNumber w = w >= 48 && w <= 57
 
     toPosixTime :: ByteString -> POSIXTime
     toPosixTime = realToFrac . read . unpack
