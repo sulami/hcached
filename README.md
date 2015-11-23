@@ -49,12 +49,12 @@ There are currently three implemented commands:
 sets a key-value pair
 
 - ttl is the maximum time to live for this value, after which it will be
-  discarded. I can be relative in seconds or absolute in unix time (even
-  seconds only, no punctuation)
+  discarded. It can be relative in seconds or absolute in UNIX time (even
+  seconds only, no punctuation).
 - key is the key under which the value will be saved. It needs to be a single
   word, that is without spaces, and can contain all ASCII values between 33 and
   126.
-- vaule-size is the size of the value in bytes. It needs to match in order for
+- value-size is the size of the value in bytes. It needs to match in order for
   the command to be valid.
 - value is the value to set. It can contain arbitrary content as long as it is
   exactly as long as specified
