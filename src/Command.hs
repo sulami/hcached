@@ -61,7 +61,7 @@ parse msg = do
     AP.Done r "set"    -> useParser setParser r
     AP.Done r "get"    -> useParser getParser r
     AP.Done r "delete" -> useParser delParser r
-    _                  -> Left "CLIENT_ERROR invalid command"
+    _                  -> Left "ERROR invalid command"
 
 -- | Parse the initial command word
 commandParser :: AP.Parser ByteString
