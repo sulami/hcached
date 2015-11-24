@@ -38,7 +38,8 @@ executeCommand lhm (SetCmd k f t n v) = do
   if n
     then return ""
     else return "STORED"
-executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $ \k -> do
+executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
+  \k -> do
   rv <- get lhm k
   case rv of
     Nothing  -> return ""
