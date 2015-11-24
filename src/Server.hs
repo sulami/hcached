@@ -6,10 +6,12 @@
 
 module Server where
 
+import           Prelude hiding (null)
+
 import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
-import           Control.Monad (when)
-import           Data.ByteString.Char8 (ByteString, append)
+import           Control.Monad (unless, when)
+import           Data.ByteString.Char8 (ByteString, append, null)
 
 import           Control.Lens (makeLenses, view)
 import           Network.Simple.TCP (
@@ -59,7 +61,7 @@ handle state (sock, remoteAddr) = do
         Right c  -> do
           lhm <- view lhm <$> readMVar state
           result <- executeCommand lhm c
-          answer sock result
+          unless (null result) $ answer sock result
           handle state (sock, remoteAddr)
 
 -- | Perdiodically clean the LHM in a seperate thread
