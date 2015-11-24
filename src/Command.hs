@@ -23,16 +23,18 @@ import           Data.Time.Clock.POSIX (POSIXTime)
 import           LimitedHashMap
 
 -- | The possible commands and their structure
-data Command = SetCmd ByteString Int POSIXTime ByteString
+data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | GetCmd ByteString
              | DelCmd ByteString
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
 executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
-executeCommand lhm (SetCmd k f t v) = do
+executeCommand lhm (SetCmd k f t n v) = do
   set lhm k f t v
-  return "STORED"
+  if n
+    then return ""
+    else return "STORED"
 executeCommand lhm (GetCmd k) = do
   rv <- get lhm k
   case rv of
@@ -80,19 +82,23 @@ useParser parser msg = do
 
 -- | Set a key-value-pair
 setParser :: CommandParser
-setParser = SetCmd
-  <$> AP.takeWhile1 isToken <* char8 ' ' <*> aNumber
-  <*> liftA toPosixTime (AP.takeWhile1 isNumber) <* char8 ' '
-  <*> (AP.take =<< aNumber) <* endOfLine
+setParser = do
+  k <- AP.takeWhile1 isToken <* char8 ' '
+  f <- aNumber <* char8 ' '
+  t <- liftA realToFrac aNumber <* char8 ' '
+  l <- aNumber <* char8 ' '
+  r <- noreply
+  v <- AP.take l <* endOfLine
+  return $ SetCmd k f t r v
   where
+    noreply :: AP.Parser Bool
+    noreply = AP.option False $ const True <$> AP.string "noreply "
+
     aNumber :: AP.Parser Int
-    aNumber = read . unpack <$> AP.takeWhile1 isNumber <* char8 ' '
+    aNumber = read . unpack <$> AP.takeWhile1 isNumber
 
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
-
-    toPosixTime :: ByteString -> POSIXTime
-    toPosixTime = realToFrac . read . unpack
 
 -- | Get a value for a key
 getParser :: CommandParser
