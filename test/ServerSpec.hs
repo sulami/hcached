@@ -25,7 +25,7 @@ spec = do
       handle <- connectTo "localhost" $ PortNumber 11212
       hSetBuffering handle LineBuffering
       hPutStr handle "get key\n"
-      hGetLine handle `shouldReturn` "NOT_FOUND\r"
+      hGetLine handle `shouldReturn` "END\r"
 
   describe "Janitor" $ do
     mst <- runIO $ newMVar istate

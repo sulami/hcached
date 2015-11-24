@@ -17,7 +17,7 @@ for new ones.
 - [ ] `prepend`
 - [ ] `cas`
 - [x] `get`
-- [ ] `gets`
+- [x] `gets`
 - [x] `delete`
 - [ ] `incr`/`decr`
 - [ ] `touch`

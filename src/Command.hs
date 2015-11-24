@@ -8,12 +8,13 @@ module Command (
   executeCommand, parse
 ) where
 
-import           Prelude hiding (concat, length, unwords)
+import           Prelude hiding (concat, length, unlines, unwords)
 
 import           Control.Applicative ((<|>), (<*>), (<*), liftA)
+import           Control.Monad (forM, liftM)
 import           Control.Concurrent.MVar (MVar)
 import           Data.ByteString.Char8 (
-  ByteString, concat, length, pack, unpack, unwords
+  ByteString, concat, length, pack, unlines, unpack, unwords
   )
 import           Data.Word (Word8)
 
@@ -26,7 +27,7 @@ import           LimitedHashMap
 
 -- | The possible commands and their structure
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
-             | GetCmd ByteString
+             | GetCmd [ByteString]
              | DelCmd ByteString
              deriving (Eq, Show)
 
@@ -37,17 +38,17 @@ executeCommand lhm (SetCmd k f t n v) = do
   if n
     then return ""
     else return "STORED"
-executeCommand lhm (GetCmd k) = do
+executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $ \k -> do
   rv <- get lhm k
   case rv of
-    Nothing  -> return "NOT_FOUND"
+    Nothing  -> return ""
     Just val -> do
       let brint = pack . show
           flags = brint $ fst val
           value = snd val
           size = brint $ length value
           item = unwords ["VALUE", k, flags, size]
-      return $ concat [item, "\r\n", value]
+      return $ concat [item, "\r\n", value, "\r\n"]
 executeCommand lhm (DelCmd k) = do
   rv <- get lhm k
   case rv of
@@ -70,6 +71,7 @@ parse msg = do
   case cmd of
     AP.Done r "set"    -> useParser setParser r
     AP.Done r "get"    -> useParser getParser r
+    AP.Done r "gets"   -> useParser getParser r
     AP.Done r "delete" -> useParser delParser r
     _                  -> Left "ERROR invalid command"
 
@@ -110,7 +112,10 @@ setParser = do
 
 -- | Get a value for a key
 getParser :: CommandParser
-getParser = GetCmd <$> AP.takeWhile1 isToken <* endOfLine
+getParser = do
+  k0 <- AP.many' (AP.takeWhile1 isToken <* char8 ' ')
+  k1 <- AP.takeWhile1 isToken <* endOfLine
+  return . GetCmd $ k0 ++ [k1]
 
 -- | Delete a KVP
 delParser :: CommandParser
