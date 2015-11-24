@@ -55,7 +55,7 @@ spec = do
     it "correctly answers to commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 False "val") `shouldReturn` "STORED"
       executeCommand lhm (SetCmd "key" 0 10 True "val") `shouldReturn` ""
-      executeCommand lhm (GetCmd "key") `shouldReturn` "VALUE 0 val"
+      executeCommand lhm (GetCmd "key") `shouldReturn` "VALUE key 0 3\r\nval"
       executeCommand lhm (DelCmd "key") `shouldReturn` "DELETED"
       executeCommand lhm (GetCmd "key") `shouldReturn` "NOT_FOUND"
       executeCommand lhm (DelCmd "key") `shouldReturn` "NOT_FOUND"

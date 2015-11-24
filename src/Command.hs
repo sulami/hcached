@@ -8,11 +8,13 @@ module Command (
   executeCommand, parse
 ) where
 
-import           Prelude hiding (unwords)
+import           Prelude hiding (concat, length, unwords)
 
 import           Control.Applicative ((<|>), (<*>), (<*), liftA)
 import           Control.Concurrent.MVar (MVar)
-import           Data.ByteString.Char8 (ByteString, pack, unpack, unwords)
+import           Data.ByteString.Char8 (
+  ByteString, concat, length, pack, unpack, unwords
+  )
 import           Data.Word (Word8)
 
 import           Control.Lens ((^.))
@@ -39,7 +41,13 @@ executeCommand lhm (GetCmd k) = do
   rv <- get lhm k
   case rv of
     Nothing  -> return "NOT_FOUND"
-    Just val -> return $ unwords ["VALUE", pack . show $ fst val, snd val]
+    Just val -> do
+      let brint = pack . show
+          flags = brint $ fst val
+          value = snd val
+          size = brint $ length value
+          item = unwords ["VALUE", k, flags, size]
+      return $ concat [item, "\r\n", value]
 executeCommand lhm (DelCmd k) = do
   rv <- get lhm k
   case rv of
