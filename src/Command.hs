@@ -86,13 +86,13 @@ setParser = do
   k <- AP.takeWhile1 isToken <* char8 ' '
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
-  l <- aNumber <* char8 ' '
-  r <- noreply
+  l <- aNumber -- no space here, if noreply is not set, a newline follows
+  r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
   return $ SetCmd k f t r v
   where
     noreply :: AP.Parser Bool
-    noreply = AP.option False $ const True <$> AP.string "noreply "
+    noreply = AP.option False $ const True <$> AP.string " noreply"
 
     aNumber :: AP.Parser Int
     aNumber = read . unpack <$> AP.takeWhile1 isNumber

@@ -14,26 +14,26 @@ spec :: Spec
 spec = do
   describe "Command Parser" $ do
     it "parses basic valid commands" $ do
-      parse "set key 23 1 11 value value\n"
+      parse "set key 23 1 11\nvalue value\n"
         `shouldBe` (Right $ SetCmd "key" 23 1 False "value value")
       parse "get key\n" `shouldBe` (Right $ GetCmd "key")
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key")
 
     it "parses set requests with multi-word values" $
-      parse "set key 0 1 17 value more values\n"
+      parse "set key 0 1 17\nvalue more values\n"
         `shouldBe` (Right $ SetCmd "key" 0 1 False "value more values")
 
     it "parses the noreply keyword" $
-      parse "set key 23 1 11 noreply value value\n"
+      parse "set key 23 1 11 noreply\nvalue value\n"
         `shouldBe` (Right $ SetCmd "key" 23 1 True "value value")
 
     it "parses special characters in keys and values" $
-      parse "set th!s-Key 0 1 12 S_x$#%@^&{}\"\n"
+      parse "set th!s-Key 0 1 12\nS_x$#%@^&{}\"\n"
         `shouldBe` (Right $ SetCmd "th!s-Key" 0 1 False "S_x$#%@^&{}\"")
 
     it "does not parse invalid content sizes" $ do
-      parse "set key 0 1 4 value\n" `shouldSatisfy` isLeft
-      parse "set key 0 1 6 value\n" `shouldSatisfy` isLeft
+      parse "set key 0 1 4\nvalue\n" `shouldSatisfy` isLeft
+      parse "set key 0 1 6\nvalue\n" `shouldSatisfy` isLeft
 
     it "does not parse empty requests" $
       parse "\n" `shouldSatisfy` isLeft
@@ -46,8 +46,8 @@ spec = do
       parse "delete key extra\n" `shouldSatisfy` isLeft
 
     it "does not parse set commands with non-numerical numbers" $ do
-      parse "set key 0 0xABC value\n" `shouldSatisfy` isLeft
-      parse "set key 0xABC 0 value\n" `shouldSatisfy` isLeft
+      parse "set key 0 0xABC\nvalue\n" `shouldSatisfy` isLeft
+      parse "set key 0xABC 0\nvalue\n" `shouldSatisfy` isLeft
 
   lhm <- runIO . newMVar $ initialLHM 3
 
