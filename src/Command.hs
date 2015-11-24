@@ -28,7 +28,7 @@ import           LimitedHashMap
 -- | The possible commands and their structure
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | GetCmd [ByteString]
-             | DelCmd ByteString
+             | DelCmd ByteString Bool
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
@@ -50,13 +50,13 @@ executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
           size = brint $ length value
           item = unwords ["VALUE", k, flags, size]
       return $ concat [item, "\r\n", value, "\r\n"]
-executeCommand lhm (DelCmd k) = do
+executeCommand lhm (DelCmd k n) = do
   rv <- get lhm k
   case rv of
-    Nothing  -> return "NOT_FOUND"
+    Nothing  -> return $ if n then "" else "NOT_FOUND"
     Just val -> do
       delete lhm k
-      return "DELETED"
+      return $ if n then "" else "DELETED"
 
 -- | What parser functions look like
 type CommandParser = AP.Parser Command
@@ -102,9 +102,6 @@ setParser = do
   v <- AP.take l <* endOfLine
   return $ SetCmd k f t r v
   where
-    noreply :: AP.Parser Bool
-    noreply = AP.option False $ const True <$> AP.string " noreply"
-
     aNumber :: AP.Parser Int
     aNumber = read . unpack <$> AP.takeWhile1 isNumber
 
@@ -120,7 +117,11 @@ getParser = do
 
 -- | Delete a KVP
 delParser :: CommandParser
-delParser = DelCmd <$> AP.takeWhile1 isToken <* endOfLine
+delParser = DelCmd <$> AP.takeWhile1 isToken <*> noreply <* endOfLine
+
+-- | Parse a possible "noreply" postfix
+noreply :: AP.Parser Bool
+noreply = AP.option False $ const True <$> AP.string " noreply"
 
 -- | Is a 'Word8' part of the accepted set of characters?
 isToken :: Word8 -> Bool

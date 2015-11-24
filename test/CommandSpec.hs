@@ -18,7 +18,7 @@ spec = do
         `shouldBe` (Right $ SetCmd "key" 23 1 False "value value")
       parse "get key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
-      parse "delete key\n" `shouldBe` (Right $ DelCmd "key")
+      parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
 
     it "parses set requests with multi-word values" $
       parse "set key 0 1 17\nvalue more values\n"
@@ -66,6 +66,7 @@ spec = do
 
     it "correctly answers to delete commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 True "val")
-      executeCommand lhm (DelCmd "key") `shouldReturn` "DELETED"
-      executeCommand lhm (DelCmd "key") `shouldReturn` "NOT_FOUND"
+      executeCommand lhm (DelCmd "key" False) `shouldReturn` "DELETED"
+      executeCommand lhm (DelCmd "key" False) `shouldReturn` "NOT_FOUND"
+      executeCommand lhm (DelCmd "key" True) `shouldReturn` ""
 
