@@ -16,23 +16,11 @@ spec = do
     it "parses basic valid commands" $ do
       parse "set key 23 1 11\nvalue value\n"
         `shouldBe` (Right $ SetCmd "key" 23 1 False "value value")
-      parse "get key\n" `shouldBe` (Right $ GetCmd ["key"])
+      parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
       parse "flush_all\n" `shouldBe` (Right $ FlushCmd 0 False)
       parse "flush_all 30 noreply\n" `shouldBe` (Right $ FlushCmd 30 True)
-
-    it "parses set requests with multi-word values" $
-      parse "set key 0 1 17\nvalue more values\n"
-        `shouldBe` (Right $ SetCmd "key" 0 1 False "value more values")
-
-    it "parses get(s) requests with several keys" $ do
-      parse "get key1 key2\n" `shouldBe` (Right $ GetCmd ["key1","key2"])
-      parse "gets key1 key2\n" `shouldBe` (Right $ GetCmd ["key1","key2"])
-
-    it "parses the noreply keyword" $
-      parse "set key 23 1 11 noreply\nvalue value\n"
-        `shouldBe` (Right $ SetCmd "key" 23 1 True "value value")
 
     it "parses special characters in keys and values" $
       parse "set th!s-Key 0 1 12\nS_x$#%@^&{}\"\n"
