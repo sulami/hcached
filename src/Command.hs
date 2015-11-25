@@ -52,12 +52,12 @@ executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
           item = unwords ["VALUE", k, flags, size]
       return $ concat [item, "\r\n", value, "\r\n"]
 executeCommand lhm (DelCmd k n) = do
-  rv <- get lhm k
-  case rv of
-    Nothing  -> return $ if n then "" else "NOT_FOUND"
-    Just val -> do
+  mem <- isMember lhm k
+  if mem
+    then do
       delete lhm k
       return $ if n then "" else "DELETED"
+    else return $ if n then "" else "NOT_FOUND"
 executeCommand lhm (FlushCmd t n) = do
   flush lhm
   return $ if n then "" else "OK"

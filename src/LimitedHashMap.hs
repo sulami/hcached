@@ -80,6 +80,12 @@ get' s k = HML.lookup k $ s^.hashMap
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
+-- | Check if a key is part of the LHM without updating the MRU like get would
+isMember :: MVar LimitedHashMap -> ByteString -> IO Bool
+isMember lhm k = do
+  l <- readMVar lhm
+  return . HML.member k $ view hashMap l
+
 -- | Delete a KVP
 delete :: MVar LimitedHashMap -> ByteString -> IO ()
 delete lhm k = do
