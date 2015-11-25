@@ -49,6 +49,13 @@ spec = do
       executeCommand lhm (SetCmd "key" 0 10 False "val") `shouldReturn` "STORED"
       executeCommand lhm (SetCmd "keys" 0 10 True "val") `shouldReturn` ""
 
+    it "correctly answers to add commands" $ do
+      executeCommand lhm (AddCmd "kay" 0 10 False "val") `shouldReturn` "STORED"
+      executeCommand lhm (AddCmd "kay" 0 10 False "val")
+        `shouldReturn` "NOT_STORED"
+      executeCommand lhm (AddCmd "kay" 0 10 True "val")
+        `shouldReturn` ""
+
     it "correctly answers to get(s) commands" $ do
       executeCommand lhm (GetCmd ["no"]) `shouldReturn` "END"
       executeCommand lhm (GetCmd ["key"])

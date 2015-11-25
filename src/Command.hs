@@ -40,6 +40,13 @@ executeCommand lhm (SetCmd k f t n v) = do
   if n
     then return ""
     else return "STORED"
+executeCommand lhm (AddCmd k f t n v) = do
+  mem <- isMember lhm k
+  if mem
+    then return $ if n then "" else "NOT_STORED"
+    else do
+      set lhm k f t v
+      return $ if n then "" else "STORED"
 executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
   \k -> do
   rv <- get lhm k
@@ -54,11 +61,11 @@ executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
       return $ concat [item, "\r\n", value, "\r\n"]
 executeCommand lhm (DelCmd k n) = do
   mem <- isMember lhm k
-  if mem
-    then do
+  if not mem
+    then return $ if n then "" else "NOT_FOUND"
+    else do
       delete lhm k
       return $ if n then "" else "DELETED"
-    else return $ if n then "" else "NOT_FOUND"
 executeCommand lhm (FlushCmd t n) = do
   flush lhm
   return $ if n then "" else "OK"

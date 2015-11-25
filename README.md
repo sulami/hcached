@@ -11,7 +11,7 @@ for new ones.
 ### Memcached-compability
 
 - [x] `set`
-- [ ] `add`
+- [x] `add`
 - [ ] `replace`
 - [ ] `append`
 - [ ] `prepend`
