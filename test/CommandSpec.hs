@@ -60,3 +60,7 @@ spec = do
       executeCommand lhm (DelCmd "key" False) `shouldReturn` "NOT_FOUND"
       executeCommand lhm (DelCmd "key" True) `shouldReturn` ""
 
+    it "correctly answers to flush commands" $ do
+      executeCommand lhm (FlushCmd 0 False) `shouldReturn` "OK"
+      executeCommand lhm (FlushCmd 5 True) `shouldReturn` ""
+

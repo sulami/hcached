@@ -58,6 +58,8 @@ executeCommand lhm (DelCmd k n) = do
     Just val -> do
       delete lhm k
       return $ if n then "" else "DELETED"
+executeCommand lhm (FlushCmd t n) =
+  return $ if n then "" else "OK"
 
 -- | What parser functions look like
 type CommandParser = AP.Parser Command
