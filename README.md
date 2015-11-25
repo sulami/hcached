@@ -16,14 +16,14 @@ for new ones.
 - [ ] `append`
 - [ ] `prepend`
 - [ ] `cas`
-- [x] `get`
-- [x] `gets`
+- [x] `get`/`gets`
 - [x] `delete`
 - [ ] `incr`/`decr`
 - [ ] `touch`
 - [ ] `stats`
 - [x] `flush_all`
 - [ ] `version`
+- [ ] `verbosity`
 - [ ] `quit`
 
 Installing
