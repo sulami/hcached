@@ -75,7 +75,7 @@ executeCommand lhm (DelCmd k n) = do
       delete lhm k
       return $ if n then "" else "DELETED"
 executeCommand lhm (FlushCmd t n) = do
-  flush lhm
+  flush lhm t
   return $ if n then "" else "OK"
 
 -- | What parser functions look like

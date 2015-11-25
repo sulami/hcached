@@ -101,7 +101,17 @@ cleanup lhm = do
       toBeDeleted = HML.keys . HML.filterWithKey isExpired $ view hashMap s
   forM_ toBeDeleted $ delete lhm
 
--- | Empty the whole LHM
-flush :: MVar LimitedHashMap -> IO ()
-flush lhm = modifyMVar_ lhm $ return . (hashMap .~ HML.empty) . (mru .~ [])
+-- | Flush out all KVPs that are valid as least as long as the specified time.
+-- Short times are relative, long ones absolute, like when setting keys. A time
+-- of zero empties the whole LHM
+flush :: MVar LimitedHashMap -> POSIXTime -> IO ()
+flush lhm 0 = modifyMVar_ lhm $ return . (hashMap .~ HML.empty) . (mru .~ [])
+flush lhm t = do
+  s <- readMVar lhm
+  now <- getPOSIXTime
+  let time | t >= 60*60*24*30 = t
+           | otherwise        = now + t
+      isToBeFlushed k v = time <= v^.ttl
+      toBeFlushed = HML.keys . HML.filterWithKey isToBeFlushed $ view hashMap s
+  forM_ toBeFlushed $ delete lhm
 

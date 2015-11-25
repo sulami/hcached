@@ -46,7 +46,7 @@ spec = do
 
   lhm <- runIO . newMVar $ initialLHM 3
 
-  describe "Command Executer" $ before_ (flush lhm) $ do
+  describe "Command Executer" $ before_ (flush lhm 0) $ do
     it "correctly answers to set commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 False "val") `shouldReturn` "STORED"
       executeCommand lhm (SetCmd "keys" 0 10 True "val") `shouldReturn` ""

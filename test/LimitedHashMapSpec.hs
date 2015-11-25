@@ -129,10 +129,19 @@ spec = do
 
     it "flushes when ordered to" $ do
       set mlhm "2" 0 10 "two"
-      flush mlhm
+      flush mlhm 0
       lhm <- readMVar mlhm
       HML.size (lhm^.hashMap) `shouldBe` 0
       length (lhm^.mru) `shouldBe` 0
+
+    it "flushed only KVPs that are valid long enough" $ do
+      set mlhm "1" 0 8 "one"
+      set mlhm "2" 0 12 "two"
+      flush mlhm 10
+      isMember mlhm "1" `shouldReturn` True
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 1
+      length (lhm^.mru) `shouldBe` 1
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
