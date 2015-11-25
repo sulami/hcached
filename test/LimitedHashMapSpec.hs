@@ -127,5 +127,12 @@ spec = do
       HML.size (lhm^.hashMap) `shouldBe` 1
       length (lhm^.mru) `shouldBe` 1
 
+    it "flushes when ordered to" $ do
+      set mlhm "2" 0 10 "two"
+      flush mlhm
+      lhm <- readMVar mlhm
+      HML.size (lhm^.hashMap) `shouldBe` 0
+      length (lhm^.mru) `shouldBe` 0
+
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

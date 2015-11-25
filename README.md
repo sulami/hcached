@@ -22,7 +22,7 @@ for new ones.
 - [ ] `incr`/`decr`
 - [ ] `touch`
 - [ ] `stats`
-- [ ] `flush_all`
+- [x] `flush_all`
 - [ ] `version`
 - [ ] `quit`
 

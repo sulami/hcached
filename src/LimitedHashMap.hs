@@ -6,7 +6,7 @@ import           Control.Arrow ((&&&))
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
 import           Control.Monad (forM_, when)
 
-import           Control.Lens ((^.), (%~), makeLenses, view)
+import           Control.Lens ((^.), (%~), (.~), makeLenses, view)
 import           Data.ByteString (ByteString)
 import qualified Data.HashMap.Lazy as HML
 import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
@@ -94,4 +94,8 @@ cleanup lhm = do
   let isExpired k v = now > v^.ttl
       toBeDeleted = HML.keys . HML.filterWithKey isExpired $ view hashMap s
   forM_ toBeDeleted $ delete lhm
+
+-- | Empty the whole LHM
+flush :: MVar LimitedHashMap -> IO ()
+flush lhm = modifyMVar_ lhm $ return . (hashMap .~ HML.empty) . (mru .~ [])
 
