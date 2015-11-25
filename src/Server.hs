@@ -42,7 +42,7 @@ runServer state port = do
   mst <- newMVar state
   forkIO $ janitor mst
   debugP mst $ "Listening on port " ++ show port
-  serve (Host "127.0.0.1") (show port) $ handle mst
+  serve (Host "0.0.0.0") (show port) $ handle mst
 
 -- | Handle an incoming connection
 handle :: MVar ServerState -> (Socket, SockAddr) -> IO ()
