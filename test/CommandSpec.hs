@@ -8,7 +8,7 @@ import           Data.Either (isLeft)
 import           Test.Hspec
 
 import           Command (Command (..), executeCommand, parse)
-import           LimitedHashMap (initialLHM)
+import           LimitedHashMap (flush, initialLHM)
 
 spec :: Spec
 spec = do
@@ -44,7 +44,7 @@ spec = do
 
   lhm <- runIO . newMVar $ initialLHM 3
 
-  describe "Command Executer" $ do
+  describe "Command Executer" $ before_ (flush lhm) $ do
     it "correctly answers to set commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 False "val") `shouldReturn` "STORED"
       executeCommand lhm (SetCmd "keys" 0 10 True "val") `shouldReturn` ""
@@ -57,6 +57,8 @@ spec = do
         `shouldReturn` ""
 
     it "correctly answers to get(s) commands" $ do
+      executeCommand lhm (SetCmd "key" 0 10 True "val")
+      executeCommand lhm (SetCmd "keys" 0 10 True "val")
       executeCommand lhm (GetCmd ["no"]) `shouldReturn` "END"
       executeCommand lhm (GetCmd ["key"])
         `shouldReturn` "VALUE key 0 3\r\nval\r\nEND"
