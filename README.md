@@ -12,7 +12,7 @@ for new ones.
 
 - [x] `set`
 - [x] `add`
-- [ ] `replace`
+- [x] `replace`
 - [ ] `append`
 - [ ] `prepend`
 - [ ] `cas`

@@ -28,6 +28,7 @@ import           LimitedHashMap
 -- | The possible commands and their structure
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | AddCmd ByteString Int POSIXTime Bool ByteString
+             | ReplaceCmd ByteString Int POSIXTime Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
              | FlushCmd POSIXTime Bool
@@ -43,6 +44,13 @@ executeCommand lhm (SetCmd k f t n v) = do
 executeCommand lhm (AddCmd k f t n v) = do
   mem <- isMember lhm k
   if mem
+    then return $ if n then "" else "NOT_STORED"
+    else do
+      set lhm k f t v
+      return $ if n then "" else "STORED"
+executeCommand lhm (ReplaceCmd k f t n v) = do
+  mem <- isMember lhm k
+  if not mem
     then return $ if n then "" else "NOT_STORED"
     else do
       set lhm k f t v
@@ -84,6 +92,7 @@ parse msg = do
   case cmd of
     AP.Done r "set"       -> useParser setParser r
     AP.Done r "add"       -> useParser addParser r
+    AP.Done r "replace"   -> useParser replaceParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser delParser r
@@ -113,6 +122,10 @@ setParser = insertionUncurry SetCmd <$> insertionParser
 -- | Set a key-value-pair only if not already present
 addParser :: CommandParser
 addParser = insertionUncurry AddCmd <$> insertionParser
+
+-- | Set a key-value-pair only if already present
+replaceParser :: CommandParser
+replaceParser = insertionUncurry ReplaceCmd <$> insertionParser
 
 -- | The arguments all insertion-based commands take
 type InsertionArgs = (ByteString, Int, POSIXTime, Bool, ByteString)

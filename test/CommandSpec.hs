@@ -18,6 +18,8 @@ spec = do
         `shouldBe` (Right $ SetCmd "key" 23 1 False "value value")
       parse "add key 24 0 5\nvalue\n"
         `shouldBe` (Right $ AddCmd "key" 24 0 False "value")
+      parse "replace key 24 0 5\nvalue\n"
+        `shouldBe` (Right $ ReplaceCmd "key" 24 0 False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
@@ -54,6 +56,15 @@ spec = do
       executeCommand lhm (AddCmd "kay" 0 10 False "val")
         `shouldReturn` "NOT_STORED"
       executeCommand lhm (AddCmd "kay" 0 10 True "val")
+        `shouldReturn` ""
+
+    it "correctly answers to replace commands" $ do
+      executeCommand lhm (ReplaceCmd "koy" 0 10 False "val")
+        `shouldReturn` "NOT_STORED"
+      executeCommand lhm (AddCmd "koy" 0 10 False "val")
+      executeCommand lhm (ReplaceCmd "koy" 0 10 False "val")
+        `shouldReturn` "STORED"
+      executeCommand lhm (ReplaceCmd "koy" 0 10 True "val")
         `shouldReturn` ""
 
     it "correctly answers to get(s) commands" $ do
