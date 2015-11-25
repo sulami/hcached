@@ -78,7 +78,7 @@ parse msg = do
 
 -- | Parse the initial command word
 commandParser :: AP.Parser ByteString
-commandParser = AP.takeWhile1 isLowercaseChar <* char8 ' '
+commandParser = AP.takeWhile1 isLowercaseChar
   where
     isLowercaseChar :: Word8 -> Bool
     isLowercaseChar w = w >= 97 && w <= 122
@@ -94,30 +94,26 @@ useParser parser msg = do
 -- | Set a key-value-pair
 setParser :: CommandParser
 setParser = do
-  k <- AP.takeWhile1 isToken <* char8 ' '
+  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
   l <- aNumber -- no space here, if noreply is not set, a newline follows
   r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
   return $ SetCmd k f t r v
-  where
-    aNumber :: AP.Parser Int
-    aNumber = read . unpack <$> AP.takeWhile1 isNumber
-
-    isNumber :: Word8 -> Bool
-    isNumber w = w >= 48 && w <= 57
 
 -- | Get a value for a key
 getParser :: CommandParser
 getParser = do
-  k0 <- AP.many' (AP.takeWhile1 isToken <* char8 ' ')
+  k0 <- char8 ' ' *> AP.many' (AP.takeWhile1 isToken <* char8 ' ')
   k1 <- AP.takeWhile1 isToken <* endOfLine
   return . GetCmd $ k0 ++ [k1]
 
 -- | Delete a KVP
 delParser :: CommandParser
-delParser = DelCmd <$> AP.takeWhile1 isToken <*> noreply <* endOfLine
+delParser = DelCmd
+  <$> (char8 ' ' *> AP.takeWhile1 isToken)
+  <*> noreply <* endOfLine
 
 -- | Parse a possible "noreply" postfix
 noreply :: AP.Parser Bool
@@ -126,4 +122,11 @@ noreply = AP.option False $ const True <$> AP.string " noreply"
 -- | Is a 'Word8' part of the accepted set of characters?
 isToken :: Word8 -> Bool
 isToken w = w >= 33 && w <= 126
+
+-- | Parse a number
+aNumber :: AP.Parser Int
+aNumber = read . unpack <$> AP.takeWhile1 isNumber
+  where
+    isNumber :: Word8 -> Bool
+    isNumber w = w >= 48 && w <= 57
 
