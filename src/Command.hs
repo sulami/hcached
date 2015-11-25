@@ -27,6 +27,7 @@ import           LimitedHashMap
 
 -- | The possible commands and their structure
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
+             | AddCmd ByteString Int POSIXTime Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
              | FlushCmd POSIXTime Bool
@@ -75,6 +76,7 @@ parse msg = do
   let cmd = AP.parse commandParser msg
   case cmd of
     AP.Done r "set"       -> useParser setParser r
+    AP.Done r "add"       -> useParser addParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser delParser r
@@ -99,14 +101,33 @@ useParser parser msg = do
 
 -- | Set a key-value-pair
 setParser :: CommandParser
-setParser = do
+setParser = insertionUncurry SetCmd <$> insertionParser
+
+-- | Set a key-value-pair only if not already present
+addParser :: CommandParser
+addParser = insertionUncurry AddCmd <$> insertionParser
+
+-- | The arguments all insertion-based commands take
+type InsertionArgs = (ByteString, Int, POSIXTime, Bool, ByteString)
+
+-- | The type of an insertion-based command's constructor
+type InsertionCommand =
+  ByteString -> Int -> POSIXTime -> Bool -> ByteString -> Command
+
+-- | Uncurry the insertion arguments for command construction
+insertionUncurry :: InsertionCommand -> InsertionArgs -> Command
+insertionUncurry cmd (k,f,t,r,v) = cmd k f t r v
+
+-- | Parse the arguments for all the insertion-based commands
+insertionParser :: AP.Parser InsertionArgs
+insertionParser = do
   k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
   l <- aNumber -- no space here, if noreply is not set, a newline follows
   r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
-  return $ SetCmd k f t r v
+  return (k, f, t, r, v)
 
 -- | Get a value for a key
 getParser :: CommandParser

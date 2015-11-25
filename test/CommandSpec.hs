@@ -16,6 +16,8 @@ spec = do
     it "parses basic valid commands" $ do
       parse "set key 23 1 11\nvalue value\n"
         `shouldBe` (Right $ SetCmd "key" 23 1 False "value value")
+      parse "add key 24 0 5\nvalue\n"
+        `shouldBe` (Right $ AddCmd "key" 24 0 False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
