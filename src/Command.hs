@@ -77,6 +77,7 @@ executeCommand lhm (DelCmd k n) = do
 executeCommand lhm (FlushCmd t n) = do
   flush lhm t
   return $ if n then "" else "OK"
+executeCommand _ _ = return "SERVER_ERROR unknown command type"
 
 -- | What parser functions look like
 type CommandParser = AP.Parser Command
