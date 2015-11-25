@@ -29,6 +29,7 @@ import           LimitedHashMap
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
+             | FlushCmd POSIXTime Bool
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
@@ -70,18 +71,20 @@ parse :: ByteString -> CommandParseResult
 parse msg = do
   let cmd = AP.parse commandParser msg
   case cmd of
-    AP.Done r "set"    -> useParser setParser r
-    AP.Done r "get"    -> useParser getParser r
-    AP.Done r "gets"   -> useParser getParser r
-    AP.Done r "delete" -> useParser delParser r
-    _                  -> Left "ERROR invalid command"
+    AP.Done r "set"       -> useParser setParser r
+    AP.Done r "get"       -> useParser getParser r
+    AP.Done r "gets"      -> useParser getParser r
+    AP.Done r "delete"    -> useParser delParser r
+    AP.Done r "flush_all" -> useParser flushParser r
+    _                     -> Left "ERROR invalid command"
 
 -- | Parse the initial command word
 commandParser :: AP.Parser ByteString
 commandParser = AP.takeWhile1 isLowercaseChar
   where
     isLowercaseChar :: Word8 -> Bool
-    isLowercaseChar w = w >= 97 && w <= 122
+    isLowercaseChar 95 = True -- underscore
+    isLowercaseChar w  = w >= 97 && w <= 122
 
 -- | Use a parser to try to parse a command
 useParser :: CommandParser -> ByteString -> CommandParseResult
@@ -113,6 +116,11 @@ getParser = do
 delParser :: CommandParser
 delParser = DelCmd
   <$> (char8 ' ' *> AP.takeWhile1 isToken)
+  <*> noreply <* endOfLine
+
+flushParser :: CommandParser
+flushParser = FlushCmd
+  <$> liftA realToFrac (AP.option 0 (char8 ' ' *> aNumber))
   <*> noreply <* endOfLine
 
 -- | Parse a possible "noreply" postfix

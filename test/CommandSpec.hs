@@ -19,6 +19,8 @@ spec = do
       parse "get key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
+      parse "flush_all\n" `shouldBe` (Right $ FlushCmd 0 False)
+      parse "flush_all 30 noreply\n" `shouldBe` (Right $ FlushCmd 30 True)
 
     it "parses set requests with multi-word values" $
       parse "set key 0 1 17\nvalue more values\n"
