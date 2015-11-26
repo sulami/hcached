@@ -48,10 +48,11 @@ spec = do
         Nothing  -> assertFailure "Did not find deposited value"
         Just val -> val^.ttl - now `shouldSatisfy` (\t -> t > 9 && t <= 10)
 
-    it "can append values to existing values" $ do
+    it "can append and prepend values to existing values" $ do
       set mlhm "1" 0 60 "one"
-      append mlhm "1" "one"
-      get mlhm "1" `shouldReturn` Just (0, "oneone")
+      append mlhm "1" "toe"
+      prepend mlhm "1" "ice"
+      get mlhm "1" `shouldReturn` Just (0, "iceonetoe")
 
     it "recognizes non-existent keys" $
       get mlhm "1" `shouldReturn` Nothing

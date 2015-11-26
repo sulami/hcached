@@ -22,6 +22,8 @@ spec = do
         `shouldBe` (Right $ ReplaceCmd "key" 24 0 False "value")
       parse "append key 5\nvalue\n"
         `shouldBe` (Right $ AppendCmd "key" False "value")
+      parse "prepend key 5\nvalue\n"
+        `shouldBe` (Right $ PrependCmd "key" False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
@@ -69,14 +71,18 @@ spec = do
       executeCommand lhm (ReplaceCmd "koy" 0 10 True "val")
         `shouldReturn` ""
 
-    it "correctly answers to append commands" $ do
+    it "correctly answers to append and prepend commands" $ do
       executeCommand lhm (AppendCmd "key" False "val")
+        `shouldReturn` "NOT_STORED"
+      executeCommand lhm (PrependCmd "key" False "val")
         `shouldReturn` "NOT_STORED"
       executeCommand lhm (SetCmd "key" 0 10 True "val")
       executeCommand lhm (AppendCmd "key" False "val")
         `shouldReturn` "STORED"
+      executeCommand lhm (PrependCmd "key" False "val")
+        `shouldReturn` "STORED"
       executeCommand lhm (GetCmd ["key"])
-        `shouldReturn` "VALUE key 0 6\r\nvalval\r\nEND"
+        `shouldReturn` "VALUE key 0 9\r\nvalvalval\r\nEND"
 
     it "correctly answers to get(s) commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 True "val")

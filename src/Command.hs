@@ -30,6 +30,7 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | AddCmd ByteString Int POSIXTime Bool ByteString
              | ReplaceCmd ByteString Int POSIXTime Bool ByteString
              | AppendCmd ByteString Bool ByteString
+             | PrependCmd ByteString Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
              | FlushCmd POSIXTime Bool
@@ -60,6 +61,13 @@ executeCommand lhm (AppendCmd k n v) = do
     then return $ if n then "" else "NOT_STORED"
     else do
       append lhm k v
+      return $ if n then "" else "STORED"
+executeCommand lhm (PrependCmd k n v) = do
+  mem <- isMember lhm k
+  if not mem
+    then return $ if n then "" else "NOT_STORED"
+    else do
+      prepend lhm k v
       return $ if n then "" else "STORED"
 executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
   \k -> do
@@ -101,6 +109,7 @@ parse msg = do
     AP.Done r "add"       -> useParser addParser r
     AP.Done r "replace"   -> useParser replaceParser r
     AP.Done r "append"    -> useParser appendParser r
+    AP.Done r "prepend"   -> useParser prependParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser delParser r
@@ -157,6 +166,7 @@ insertionParser = do
   v <- AP.take l <* endOfLine
   return (k, f, t, r, v)
 
+-- | Append a value to an existing one
 appendParser :: CommandParser
 appendParser = do
   k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
@@ -164,6 +174,15 @@ appendParser = do
   r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
   return $ AppendCmd k r v
+
+-- | Prepend a value to an existing one
+prependParser :: CommandParser
+prependParser = do
+  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  l <- aNumber -- no space here, if noreply is not set, a newline follows
+  r <- noreply <* endOfLine
+  v <- AP.take l <* endOfLine
+  return $ PrependCmd k r v
 
 -- | Get a value for a key
 getParser :: CommandParser

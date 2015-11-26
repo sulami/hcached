@@ -64,6 +64,13 @@ append lhm k v = do
   modifyMVar_ lhm $
     return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
+-- | Prepend a value to an existing value
+prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
+prepend lhm k v = do
+  modifyMVar_ lhm $ updateMRU k
+  modifyMVar_ lhm $
+    return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
+
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
 get lhm k = do
