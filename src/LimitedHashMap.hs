@@ -41,9 +41,8 @@ initialLHM msize = LimitedHashMap HML.empty msize []
 set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
     -> IO ()
 set lhm k f t v = do
-  now <- getPOSIXTime
-  let value | t >= 60*60*24*30 = Value v f t
-            | otherwise        = Value v f $ now + t
+  time <- convertTime t
+  let value = Value v f time
   modifyMVar_ lhm $ \s -> do
     let isFull = HML.size (s^.hashMap) >= s^.maxSize
         alreadyMember = HML.member k $ s^.hashMap
@@ -115,9 +114,7 @@ cleanup lhm = do
 -- | Update just the TTL of a KVP
 touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
 touch lhm k t = do
-  now <- getPOSIXTime
-  let time | t >= 60*60*24*30 = t
-           | otherwise        = now + t
+  time <- convertTime t
   modifyMVar_ lhm (return . (hashMap %~ HML.adjust (ttl .~ time) k))
   modifyMVar_ lhm $ updateMRU k
 
@@ -128,12 +125,19 @@ flush :: MVar LimitedHashMap -> POSIXTime -> IO ()
 flush lhm 0 = modifyMVar_ lhm $ return . (hashMap .~ HML.empty) . (mru .~ [])
 flush lhm t = do
   s <- readMVar lhm
-  now <- getPOSIXTime
-  let time | t >= 60*60*24*30 = t
-           | otherwise        = now + t
-      isToBeFlushed k v = time <= v^.ttl
+  time <- convertTime t
+  let isToBeFlushed k v = time <= v^.ttl
       toBeFlushed = HML.keys . HML.filterWithKey isToBeFlushed $ view hashMap s
   forM_ toBeFlushed $ delete lhm
+
+-- | Check if a supplied time is relative or absolute and convert it if
+-- neccessary
+convertTime :: POSIXTime -> IO POSIXTime
+convertTime t = do
+  now <- getPOSIXTime
+  return $ if t >= 60*60*24*30
+    then t
+    else now + t
 
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
