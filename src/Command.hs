@@ -166,28 +166,30 @@ insertionParser = do
   k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
-  l <- aNumber -- no space here, if noreply is not set, a newline follows
-  r <- noreply <* endOfLine
-  v <- AP.take l <* endOfLine
+  (r, v) <- sizedContentParser
   return (k, f, t, r, v)
 
 -- | Append a value to an existing one
 appendParser :: CommandParser
 appendParser = do
   k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
-  l <- aNumber -- no space here, if noreply is not set, a newline follows
-  r <- noreply <* endOfLine
-  v <- AP.take l <* endOfLine
+  (r, v) <- sizedContentParser
   return $ AppendCmd k r v
 
 -- | Prepend a value to an existing one
 prependParser :: CommandParser
 prependParser = do
   k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  (r, v) <- sizedContentParser
+  return $ PrependCmd k r v
+
+-- | Parse size-annotated content blocks (and optional noreply flags)
+sizedContentParser :: AP.Parser (Bool, ByteString)
+sizedContentParser = do
   l <- aNumber -- no space here, if noreply is not set, a newline follows
   r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
-  return $ PrependCmd k r v
+  return (r, v)
 
 -- | Get a value for a key
 getParser :: CommandParser
