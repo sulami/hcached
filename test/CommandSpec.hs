@@ -100,6 +100,11 @@ spec = do
       executeCommand lhm (DelCmd "key" False) `shouldReturn` "NOT_FOUND"
       executeCommand lhm (DelCmd "key" True) `shouldReturn` ""
 
+    it "correctly answers to touch commands" $ do
+      executeCommand lhm (TouchCmd "key" 5 False) `shouldReturn` "NOT_FOUND"
+      executeCommand lhm (SetCmd "key" 0 10 True "val")
+      executeCommand lhm (TouchCmd "key" 5 False) `shouldReturn` "TOUCHED"
+
     it "correctly answers to flush commands" $ do
       executeCommand lhm (FlushCmd 0 False) `shouldReturn` "OK"
       executeCommand lhm (FlushCmd 5 True) `shouldReturn` ""

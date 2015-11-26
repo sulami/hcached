@@ -20,7 +20,7 @@ for new ones.
 - [x] `delete`
 - [ ] `incr`
 - [ ] `decr`
-- [ ] `touch`
+- [x] `touch`
 - [ ] `stats`
 - [x] `flush_all`
 - [ ] `version`

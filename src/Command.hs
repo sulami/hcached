@@ -90,6 +90,13 @@ executeCommand lhm cmd = case cmd of
       else do
         delete lhm k
         reply n "DELETED"
+  TouchCmd k t n -> do
+    mem <- isMember lhm k
+    if not mem
+      then reply n "NOT_FOUND"
+      else do
+        touch lhm k t
+        reply n "TOUCHED"
   FlushCmd t n -> do
     flush lhm t
     reply n "OK"

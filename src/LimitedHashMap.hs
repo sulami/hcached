@@ -91,10 +91,6 @@ get lhm k = do
 get' :: LimitedHashMap -> ByteString -> Maybe Value
 get' s k = HML.lookup k $ s^.hashMap
 
--- | Update the most recently mru list to reflect a query
-updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
-updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
-
 -- | Check if a key is part of the LHM without updating the MRU like get would
 isMember :: MVar LimitedHashMap -> ByteString -> IO Bool
 isMember lhm k = do
@@ -116,6 +112,15 @@ cleanup lhm = do
       toBeDeleted = HML.keys . HML.filterWithKey isExpired $ view hashMap s
   forM_ toBeDeleted $ delete lhm
 
+-- | Update just the TTL of a KVP
+touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
+touch lhm k t = do
+  now <- getPOSIXTime
+  let time | t >= 60*60*24*30 = t
+           | otherwise        = now + t
+  modifyMVar_ lhm (return . (hashMap %~ HML.adjust (ttl .~ time) k))
+  modifyMVar_ lhm $ updateMRU k
+
 -- | Flush out all KVPs that are valid as least as long as the specified time.
 -- Short times are relative, long ones absolute, like when setting keys. A time
 -- of zero empties the whole LHM
@@ -129,4 +134,8 @@ flush lhm t = do
       isToBeFlushed k v = time <= v^.ttl
       toBeFlushed = HML.keys . HML.filterWithKey isToBeFlushed $ view hashMap s
   forM_ toBeFlushed $ delete lhm
+
+-- | Update the most recently mru list to reflect a query
+updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
+updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
