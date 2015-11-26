@@ -38,60 +38,60 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
 
 -- | Execute a command and return the answer for the client
 executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
-executeCommand lhm (SetCmd k f t n v) = do
-  set lhm k f t v
-  reply n "STORED"
-executeCommand lhm (AddCmd k f t n v) = do
-  mem <- isMember lhm k
-  if mem
-    then reply n "NOT_STORED"
-    else do
-      set lhm k f t v
-      reply n "STORED"
-executeCommand lhm (ReplaceCmd k f t n v) = do
-  mem <- isMember lhm k
-  if not mem
-    then reply n "NOT_STORED"
-    else do
-      set lhm k f t v
-      reply n "STORED"
-executeCommand lhm (AppendCmd k n v) = do
-  mem <- isMember lhm k
-  if not mem
-    then reply n "NOT_STORED"
-    else do
-      append lhm k v
-      reply n "STORED"
-executeCommand lhm (PrependCmd k n v) = do
-  mem <- isMember lhm k
-  if not mem
-    then reply n "NOT_STORED"
-    else do
-      prepend lhm k v
-      reply n "STORED"
-executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
-  \k -> do
-  rv <- get lhm k
-  case rv of
-    Nothing  -> return ""
-    Just val -> do
-      let brint = pack . show
-          flags = brint $ fst val
-          value = snd val
-          size = brint $ length value
-          item = unwords ["VALUE", k, flags, size]
-      return $ concat [item, "\r\n", value, "\r\n"]
-executeCommand lhm (DelCmd k n) = do
-  mem <- isMember lhm k
-  if not mem
-    then reply n "NOT_FOUND"
-    else do
-      delete lhm k
-      reply n "DELETED"
-executeCommand lhm (FlushCmd t n) = do
-  flush lhm t
-  reply n "OK"
-executeCommand _ _ = return "SERVER_ERROR unknown command type"
+executeCommand lhm cmd = case cmd of
+  SetCmd k f t n v -> do
+    set lhm k f t v
+    reply n "STORED"
+  AddCmd k f t n v -> do
+    mem <- isMember lhm k
+    if mem
+      then reply n "NOT_STORED"
+      else do
+        set lhm k f t v
+        reply n "STORED"
+  ReplaceCmd k f t n v -> do
+    mem <- isMember lhm k
+    if not mem
+      then reply n "NOT_STORED"
+      else do
+        set lhm k f t v
+        reply n "STORED"
+  AppendCmd k n v -> do
+    mem <- isMember lhm k
+    if not mem
+      then reply n "NOT_STORED"
+      else do
+        append lhm k v
+        reply n "STORED"
+  PrependCmd k n v -> do
+    mem <- isMember lhm k
+    if not mem
+      then reply n "NOT_STORED"
+      else do
+        prepend lhm k v
+        reply n "STORED"
+  GetCmd ks -> liftM (concat . (++ ["END"])) . forM ks $
+    \k -> do
+    rv <- get lhm k
+    case rv of
+      Nothing  -> return ""
+      Just val -> do
+        let brint = pack . show
+            flags = brint $ fst val
+            value = snd val
+            size = brint $ length value
+            item = unwords ["VALUE", k, flags, size]
+        return $ concat [item, "\r\n", value, "\r\n"]
+  DelCmd k n -> do
+    mem <- isMember lhm k
+    if not mem
+      then reply n "NOT_FOUND"
+      else do
+        delete lhm k
+        reply n "DELETED"
+  FlushCmd t n -> do
+    flush lhm t
+    reply n "OK"
 
 -- | Reply with a given message, or if noreply is set, with nothing
 reply :: Bool -> ByteString -> IO ByteString
