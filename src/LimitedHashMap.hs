@@ -8,6 +8,7 @@ import           Control.Monad (forM_, when)
 
 import           Control.Lens ((^.), (%~), (.~), makeLenses, view)
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as C8
 import qualified Data.HashMap.Lazy as HML
 import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 
@@ -55,6 +56,13 @@ set lhm k f t v = do
           then (mru %~ tail) . (hashMap %~ HML.delete delCandidate)
           else id
     return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
+
+-- | Append a value to an existing value
+append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
+append lhm k v = do
+  modifyMVar_ lhm $ updateMRU k
+  modifyMVar_ lhm $
+    return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))

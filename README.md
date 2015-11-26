@@ -13,12 +13,13 @@ for new ones.
 - [x] `set`
 - [x] `add`
 - [x] `replace`
-- [ ] `append`
+- [x] `append`
 - [ ] `prepend`
 - [ ] `cas`
 - [x] `get`/`gets`
 - [x] `delete`
-- [ ] `incr`/`decr`
+- [ ] `incr`
+- [ ] `decr`
 - [ ] `touch`
 - [ ] `stats`
 - [x] `flush_all`

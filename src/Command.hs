@@ -29,6 +29,7 @@ import           LimitedHashMap
 data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | AddCmd ByteString Int POSIXTime Bool ByteString
              | ReplaceCmd ByteString Int POSIXTime Bool ByteString
+             | AppendCmd ByteString Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
              | FlushCmd POSIXTime Bool
@@ -38,9 +39,7 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
 executeCommand :: MVar LimitedHashMap -> Command -> IO ByteString
 executeCommand lhm (SetCmd k f t n v) = do
   set lhm k f t v
-  if n
-    then return ""
-    else return "STORED"
+  if n then return "" else return "STORED"
 executeCommand lhm (AddCmd k f t n v) = do
   mem <- isMember lhm k
   if mem
@@ -54,6 +53,13 @@ executeCommand lhm (ReplaceCmd k f t n v) = do
     then return $ if n then "" else "NOT_STORED"
     else do
       set lhm k f t v
+      return $ if n then "" else "STORED"
+executeCommand lhm (AppendCmd k n v) = do
+  mem <- isMember lhm k
+  if not mem
+    then return $ if n then "" else "NOT_STORED"
+    else do
+      append lhm k v
       return $ if n then "" else "STORED"
 executeCommand lhm (GetCmd ks) = liftM (concat . (++ ["END"])) . forM ks $
   \k -> do
@@ -94,6 +100,7 @@ parse msg = do
     AP.Done r "set"       -> useParser setParser r
     AP.Done r "add"       -> useParser addParser r
     AP.Done r "replace"   -> useParser replaceParser r
+    AP.Done r "append"    -> useParser appendParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser delParser r
@@ -149,6 +156,14 @@ insertionParser = do
   r <- noreply <* endOfLine
   v <- AP.take l <* endOfLine
   return (k, f, t, r, v)
+
+appendParser :: CommandParser
+appendParser = do
+  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  l <- aNumber -- no space here, if noreply is not set, a newline follows
+  r <- noreply <* endOfLine
+  v <- AP.take l <* endOfLine
+  return $ AppendCmd k r v
 
 -- | Get a value for a key
 getParser :: CommandParser
