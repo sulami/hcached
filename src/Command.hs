@@ -32,7 +32,7 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | AppendCmd ByteString Bool ByteString
              | PrependCmd ByteString Bool ByteString
              | GetCmd [ByteString]
-             | DelCmd ByteString Bool
+             | DeleteCmd ByteString Bool
              | TouchCmd ByteString POSIXTime Bool
              | FlushCmd POSIXTime Bool
              deriving (Eq, Show)
@@ -83,7 +83,7 @@ executeCommand lhm cmd = case cmd of
             size = brint $ length value
             item = unwords ["VALUE", k, flags, size]
         return $ concat [item, "\r\n", value, "\r\n"]
-  DelCmd k n -> do
+  DeleteCmd k n -> do
     mem <- isMember lhm k
     if not mem
       then reply n "NOT_FOUND"
@@ -125,7 +125,7 @@ parse msg = do
     AP.Done r "prepend"   -> useParser prependParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
-    AP.Done r "delete"    -> useParser delParser r
+    AP.Done r "delete"    -> useParser deleteParser r
     AP.Done r "touch"     -> useParser touchParser r
     AP.Done r "flush_all" -> useParser flushParser r
     _                     -> Left "ERROR invalid command"
@@ -208,8 +208,8 @@ getParser = do
   return . GetCmd $ k0 ++ [k1]
 
 -- | Delete a KVP
-delParser :: CommandParser
-delParser = DelCmd
+deleteParser :: CommandParser
+deleteParser = DeleteCmd
   <$> (char8 ' ' *> AP.takeWhile1 isToken)
   <*> noreplyParser <* endOfLine
 

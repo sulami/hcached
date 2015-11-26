@@ -26,7 +26,7 @@ spec = do
         `shouldBe` (Right $ PrependCmd "key" False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
-      parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
+      parse "delete key\n" `shouldBe` (Right $ DeleteCmd "key" False)
       parse "touch key 10\n" `shouldBe` (Right $ TouchCmd "key" 10 False)
       parse "flush_all\n" `shouldBe` (Right $ FlushCmd 0 False)
       parse "flush_all 30 noreply\n" `shouldBe` (Right $ FlushCmd 30 True)
@@ -96,9 +96,9 @@ spec = do
 
     it "correctly answers to delete commands" $ do
       executeCommand lhm (SetCmd "key" 0 10 True "val")
-      executeCommand lhm (DelCmd "key" False) `shouldReturn` "DELETED"
-      executeCommand lhm (DelCmd "key" False) `shouldReturn` "NOT_FOUND"
-      executeCommand lhm (DelCmd "key" True) `shouldReturn` ""
+      executeCommand lhm (DeleteCmd "key" False) `shouldReturn` "DELETED"
+      executeCommand lhm (DeleteCmd "key" False) `shouldReturn` "NOT_FOUND"
+      executeCommand lhm (DeleteCmd "key" True) `shouldReturn` ""
 
     it "correctly answers to touch commands" $ do
       executeCommand lhm (TouchCmd "key" 5 False) `shouldReturn` "NOT_FOUND"
