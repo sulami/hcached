@@ -33,6 +33,7 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | PrependCmd ByteString Bool ByteString
              | GetCmd [ByteString]
              | DelCmd ByteString Bool
+             | TouchCmd ByteString POSIXTime Bool
              | FlushCmd POSIXTime Bool
              deriving (Eq, Show)
 
@@ -118,6 +119,7 @@ parse msg = do
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser delParser r
+    AP.Done r "touch"     -> useParser touchParser r
     AP.Done r "flush_all" -> useParser flushParser r
     _                     -> Left "ERROR invalid command"
 
@@ -203,6 +205,11 @@ delParser :: CommandParser
 delParser = DelCmd
   <$> (char8 ' ' *> AP.takeWhile1 isToken)
   <*> noreplyParser <* endOfLine
+
+-- | Update just the TTL of a value
+touchParser :: CommandParser
+touchParser = TouchCmd
+  <$> keyParser <*> liftA realToFrac aNumber <*> noreplyParser <* endOfLine
 
 -- | Delete all KVPs that are valid longer than t (all if t == 0)
 flushParser :: CommandParser

@@ -27,6 +27,7 @@ spec = do
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DelCmd "key" False)
+      parse "touch key 10\n" `shouldBe` (Right $ TouchCmd "key" 10 False)
       parse "flush_all\n" `shouldBe` (Right $ FlushCmd 0 False)
       parse "flush_all 30 noreply\n" `shouldBe` (Right $ FlushCmd 30 True)
 
