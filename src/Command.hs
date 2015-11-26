@@ -163,7 +163,7 @@ insertionUncurry cmd (k,f,t,r,v) = cmd k f t r v
 -- | Parse the arguments for all the insertion-based commands
 insertionParser :: AP.Parser InsertionArgs
 insertionParser = do
-  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  k <- keyParser
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
   (r, v) <- sizedContentParser
@@ -172,14 +172,14 @@ insertionParser = do
 -- | Append a value to an existing one
 appendParser :: CommandParser
 appendParser = do
-  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  k <- keyParser
   (r, v) <- sizedContentParser
   return $ AppendCmd k r v
 
 -- | Prepend a value to an existing one
 prependParser :: CommandParser
 prependParser = do
-  k <- char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
+  k <- keyParser
   (r, v) <- sizedContentParser
   return $ PrependCmd k r v
 
@@ -187,7 +187,7 @@ prependParser = do
 sizedContentParser :: AP.Parser (Bool, ByteString)
 sizedContentParser = do
   l <- aNumber -- no space here, if noreply is not set, a newline follows
-  r <- noreply <* endOfLine
+  r <- noreplyParser <* endOfLine
   v <- AP.take l <* endOfLine
   return (r, v)
 
@@ -202,16 +202,21 @@ getParser = do
 delParser :: CommandParser
 delParser = DelCmd
   <$> (char8 ' ' *> AP.takeWhile1 isToken)
-  <*> noreply <* endOfLine
+  <*> noreplyParser <* endOfLine
 
+-- | Delete all KVPs that are valid longer than t (all if t == 0)
 flushParser :: CommandParser
 flushParser = FlushCmd
   <$> liftA realToFrac (AP.option 0 (char8 ' ' *> aNumber))
-  <*> noreply <* endOfLine
+  <*> noreplyParser <* endOfLine
+
+-- | Parse a key including surrounding whitespace on both sides
+keyParser :: AP.Parser ByteString
+keyParser = char8 ' ' *> AP.takeWhile1 isToken <* char8 ' '
 
 -- | Parse a possible "noreply" postfix
-noreply :: AP.Parser Bool
-noreply = AP.option False $ const True <$> AP.string " noreply"
+noreplyParser :: AP.Parser Bool
+noreplyParser = AP.option False $ const True <$> AP.string " noreply"
 
 -- | Is a 'Word8' part of the accepted set of characters?
 isToken :: Word8 -> Bool
