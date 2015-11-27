@@ -110,3 +110,6 @@ spec = do
       executeCommand lhm (FlushCmd 0 False) `shouldReturn` "OK"
       executeCommand lhm (FlushCmd 5 True) `shouldReturn` ""
 
+    it "correctly answers to version commands" $
+      executeCommand lhm VersionCmd `shouldReturn` "0.1.0.0"
+

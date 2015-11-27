@@ -23,7 +23,7 @@ for new ones.
 - [x] `touch`
 - [ ] `stats`
 - [x] `flush_all`
-- [ ] `version`
+- [x] `version`
 - [ ] `verbosity`
 - [ ] `quit`
 

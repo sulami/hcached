@@ -101,6 +101,7 @@ executeCommand lhm cmd = case cmd of
   FlushCmd t n -> do
     flush lhm t
     reply n "OK"
+  VersionCmd -> return "0.1.0.0" -- TODO get the actual version
 
 -- | Reply with a given message, or if noreply is set, with nothing
 reply :: Bool -> ByteString -> IO ByteString
