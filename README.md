@@ -25,7 +25,7 @@ for new ones.
 - [x] `flush_all`
 - [x] `version`
 - [ ] `verbosity`
-- [ ] `quit`
+- [x] `quit`
 
 Installing
 ----------

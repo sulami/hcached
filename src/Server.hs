@@ -59,10 +59,11 @@ handle state (sock, remoteAddr) = do
       debugP state $ "Received message: " ++ show msg
       let cmd = parse msg
       case cmd of
-        Left err -> do
+        Left err      -> do
           answer sock err
           handle state (sock, remoteAddr)
-        Right c  -> do
+        Right QuitCmd -> TCP.closeSock sock
+        Right c       -> do
           result <- executeCommand state c
           unless (C8.null result) $ answer sock result
           handle state (sock, remoteAddr)
@@ -96,6 +97,7 @@ data Command = SetCmd C8.ByteString Int POSIXTime Bool C8.ByteString
              | TouchCmd C8.ByteString POSIXTime Bool
              | FlushCmd POSIXTime Bool
              | VersionCmd
+             | QuitCmd
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
@@ -193,6 +195,7 @@ parse msg = do
     AP.Done r "touch"     -> useParser touchParser r
     AP.Done r "flush_all" -> useParser flushParser r
     AP.Done r "version"   -> useParser versionParser r
+    AP.Done r "quit"      -> useParser quitParser r
     _                     -> Left "ERROR invalid command"
 
 -- | Parse the initial command word
@@ -292,6 +295,10 @@ flushParser = FlushCmd
 -- | Query the version string of the server
 versionParser :: CommandParser
 versionParser = endOfLine >> return VersionCmd
+
+-- | Announce the end of the interaction
+quitParser :: CommandParser
+quitParser = endOfLine >> return QuitCmd
 
 -- | Parse a key including surrounding whitespace on both sides
 keyParser :: AP.Parser C8.ByteString
