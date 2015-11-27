@@ -11,6 +11,7 @@ import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
 import           Control.Monad (forM, liftM, unless, when)
 import qualified Data.ByteString.Char8 as C8
+import           Data.Version (showVersion)
 import           Data.Word (Word8)
 
 import           Control.Lens ((^.), makeLenses, view)
@@ -19,6 +20,7 @@ import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
 import           Data.Time.Clock.POSIX (POSIXTime)
 import qualified Network.Simple.TCP as TCP
 
+import qualified Paths_hcached as P
 import           LimitedHashMap
 
 -- | Hold all state that the server has
@@ -35,7 +37,7 @@ makeLenses ''ServerState
 initialState :: Bool -> Int -> Int -> IO ServerState
 initialState dbg cui size = do
   lhm <- newMVar $ initialLHM size
-  let version = "0.1.0.0"
+  let version = C8.pack $ showVersion P.version
   return $ ServerState dbg cui lhm version
 
 -- | Run the server on the specified port

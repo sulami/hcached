@@ -5,8 +5,10 @@ module ServerSpec where
 
 import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Concurrent.MVar (newMVar, readMVar)
+import           Data.ByteString.Char8 (pack)
 import           Data.Either (isLeft)
 import           Data.Maybe (isJust)
+import           Data.Version (showVersion)
 import           System.IO (BufferMode (..), hGetLine, hPutStr, hSetBuffering)
 
 import           Control.Lens ((^.), view)
@@ -14,6 +16,7 @@ import           Network (PortID (..), connectTo)
 import           Test.Hspec
 
 import           LimitedHashMap
+import qualified Paths_hcached as P
 import           Server
 
 spec :: Spec
@@ -141,6 +144,5 @@ spec = do
       executeCommand ss (FlushCmd 5 True) `shouldReturn` ""
 
     it "correctly answers to version commands" $
-      executeCommand ss VersionCmd `shouldReturn` "0.1.0.0"
-
+      executeCommand ss VersionCmd `shouldReturn` pack (showVersion P.version)
 

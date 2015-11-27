@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     LimitedHashMap
                      , Server
+  other-modules:       Paths_hcached
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , network
@@ -41,6 +42,7 @@ test-suite hcached-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   other-modules:       LimitedHashMapSpec
+                     , Paths_hcached
                      , ServerSpec
   build-depends:       base
                      , hcached
@@ -51,6 +53,7 @@ test-suite hcached-test
                      , unordered-containers
                      , lens
                      , network
+                     , bytestring
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
