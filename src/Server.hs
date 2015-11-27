@@ -17,9 +17,7 @@ import           Control.Lens ((^.), makeLenses, view)
 import qualified Data.Attoparsec.ByteString as AP
 import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
 import           Data.Time.Clock.POSIX (POSIXTime)
-import           Network.Simple.TCP (
-  HostPreference (Host), Socket, SockAddr, recv, send, serve
-  )
+import qualified Network.Simple.TCP as TCP
 
 import           LimitedHashMap
 
@@ -44,12 +42,12 @@ runServer state port = do
   mst <- newMVar state
   forkIO $ janitor mst
   debugP mst $ "Listening on port " ++ show port
-  serve (Host "0.0.0.0") (show port) $ handle mst
+  TCP.serve (TCP.Host "0.0.0.0") (show port) $ handle mst
 
 -- | Handle an incoming connection
-handle :: MVar ServerState -> (Socket, SockAddr) -> IO ()
+handle :: MVar ServerState -> (TCP.Socket, TCP.SockAddr) -> IO ()
 handle state (sock, remoteAddr) = do
-  inc <- recv sock 256
+  inc <- TCP.recv sock 256
   case inc of
     Nothing  -> return ()
     Just msg -> do
@@ -74,8 +72,8 @@ janitor state = do
   janitor state
 
 -- | Write an answer to a socket. Appends the correct line-ending
-answer :: Socket -> C8.ByteString -> IO ()
-answer sock msg = send sock $ C8.append msg "\r\n"
+answer :: TCP.Socket -> C8.ByteString -> IO ()
+answer sock msg = TCP.send sock $ C8.append msg "\r\n"
 
 -- | Print debug output if enabled
 debugP :: MVar ServerState -> String -> IO ()
