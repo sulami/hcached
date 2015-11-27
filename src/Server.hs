@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 -- | This module handles setting up the server and handling client requests,
--- functioning as the core that connects all components.
+-- parsing requests and dispatching commands to the embedded LHM.
 
 module Server where
 
@@ -26,6 +26,7 @@ data ServerState = ServerState
   { _debug :: !Bool                  -- ^ Debug output?
   , _cui   :: !Int                   -- ^ Janitor cleanup interval in seconds
   , _lhm   :: !(MVar LimitedHashMap) -- ^ The hashmap
+  , _ver   :: !C8.ByteString         -- ^ Server version
   }
 
 makeLenses ''ServerState
@@ -34,7 +35,8 @@ makeLenses ''ServerState
 initialState :: Bool -> Int -> Int -> IO ServerState
 initialState dbg cui size = do
   lhm <- newMVar $ initialLHM size
-  return $ ServerState dbg cui lhm
+  let version = "0.1.0.0"
+  return $ ServerState dbg cui lhm version
 
 -- | Run the server on the specified port
 runServer :: ServerState -> Word -> IO ()
@@ -159,7 +161,7 @@ executeCommand ss cmd = do
     FlushCmd t n -> do
       flush lhm t
       reply n "OK"
-    VersionCmd -> return "0.1.0.0" -- TODO get the actual version
+    VersionCmd -> view ver <$> readMVar ss
 
 -- | Reply with a given message, or if noreply is set, with nothing
 reply :: Bool -> C8.ByteString -> IO C8.ByteString
@@ -307,5 +309,4 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
   where
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
-
 
