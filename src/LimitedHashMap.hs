@@ -4,7 +4,7 @@ module LimitedHashMap where
 
 import           Control.Arrow ((&&&))
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
-import           Control.Monad (forM_, when)
+import           Control.Monad ((>=>), forM_, when)
 
 import           Control.Lens ((^.), (%~), (.~), makeLenses, view)
 import           Data.ByteString (ByteString)
@@ -58,17 +58,13 @@ set lhm k f t v = do
 
 -- | Append a value to an existing value
 append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-append lhm k v = do
-  modifyMVar_ lhm $ updateMRU k
-  modifyMVar_ lhm $
-    return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
+append lhm k v = modifyMVar_ lhm $
+  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
 -- | Prepend a value to an existing value
 prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-prepend lhm k v = do
-  modifyMVar_ lhm $ updateMRU k
-  modifyMVar_ lhm $
-    return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
+prepend lhm k v = modifyMVar_ lhm $
+  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
@@ -98,9 +94,8 @@ isMember lhm k = do
 
 -- | Delete a KVP
 delete :: MVar LimitedHashMap -> ByteString -> IO ()
-delete lhm k = do
-  modifyMVar_ lhm (return . (hashMap %~ HML.delete k))
-  modifyMVar_ lhm (return . (mru %~ filter (/= k)))
+delete lhm k = modifyMVar_ lhm $
+  return . (hashMap %~ HML.delete k) . (mru %~ filter (/= k))
 
 -- | Remove all expired KVPs from the LHM
 cleanup :: MVar LimitedHashMap -> IO ()
@@ -115,8 +110,8 @@ cleanup lhm = do
 touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
 touch lhm k t = do
   time <- convertTime t
-  modifyMVar_ lhm (return . (hashMap %~ HML.adjust (ttl .~ time) k))
-  modifyMVar_ lhm $ updateMRU k
+  modifyMVar_ lhm $
+    updateMRU k >=> return . (hashMap %~ HML.adjust (ttl .~ time) k)
 
 -- | Flush out all KVPs that are valid as least as long as the specified time.
 -- Short times are relative, long ones absolute, like when setting keys. A time
