@@ -35,6 +35,7 @@ data Command = SetCmd ByteString Int POSIXTime Bool ByteString
              | DeleteCmd ByteString Bool
              | TouchCmd ByteString POSIXTime Bool
              | FlushCmd POSIXTime Bool
+             | VersionCmd
              deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
@@ -128,6 +129,7 @@ parse msg = do
     AP.Done r "delete"    -> useParser deleteParser r
     AP.Done r "touch"     -> useParser touchParser r
     AP.Done r "flush_all" -> useParser flushParser r
+    AP.Done r "version"   -> useParser versionParser r
     _                     -> Left "ERROR invalid command"
 
 -- | Parse the initial command word
@@ -223,6 +225,10 @@ flushParser :: CommandParser
 flushParser = FlushCmd
   <$> liftA realToFrac (AP.option 0 (char8 ' ' *> aNumber))
   <*> noreplyParser <* endOfLine
+
+-- | Query the version string of the server
+versionParser :: CommandParser
+versionParser = endOfLine >> return VersionCmd
 
 -- | Parse a key including surrounding whitespace on both sides
 keyParser :: AP.Parser ByteString

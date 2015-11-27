@@ -30,6 +30,7 @@ spec = do
       parse "touch key 10\n" `shouldBe` (Right $ TouchCmd "key" 10 False)
       parse "flush_all\n" `shouldBe` (Right $ FlushCmd 0 False)
       parse "flush_all 30 noreply\n" `shouldBe` (Right $ FlushCmd 30 True)
+      parse "version\n" `shouldBe` Right VersionCmd
 
     it "parses special characters in keys and values" $
       parse "set th!s-Key 0 1 12\nS_x$#%@^&{}\"\n"
