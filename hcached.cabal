@@ -15,9 +15,8 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Command
+  exposed-modules:     LimitedHashMap
                      , Server
-                     , LimitedHashMap
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , network
@@ -41,8 +40,7 @@ test-suite hcached-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  other-modules:       CommandSpec
-                     , LimitedHashMapSpec
+  other-modules:       LimitedHashMapSpec
                      , ServerSpec
   build-depends:       base
                      , hcached
