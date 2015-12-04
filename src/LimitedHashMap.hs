@@ -29,13 +29,14 @@ data LimitedHashMap = LimitedHashMap
   { _hashMap :: !(HML.HashMap ByteString Value) -- ^ The Hashmap used
   , _maxSize :: !Int                            -- ^ Maximum hashmap size
   , _mru     :: ![ByteString]                   -- ^ Recently used hashes
+  , _uniq    :: !Integer                        -- ^ Insertion counter
   }
 
 makeLenses ''LimitedHashMap
 
 -- | The inital state to use when starting up
 initialLHM :: Int -> LimitedHashMap
-initialLHM msize = LimitedHashMap HML.empty msize []
+initialLHM msize = LimitedHashMap HML.empty msize [] 0
 
 -- | Insert a new KVP
 set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
