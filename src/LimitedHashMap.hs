@@ -44,7 +44,7 @@ set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
     -> IO ()
 set lhm k f t v = do
   time <- convertTime t
-  unique <- view counter <$> readMVar lhm
+  unique <- getUnique lhm
   let value = Value v f time unique
   modifyMVar_ lhm $ \s -> do
     let isFull = HML.size (s^.hashMap) >= s^.maxSize
@@ -57,18 +57,17 @@ set lhm k f t v = do
         performDeletion = if needsDeletion
           then (mru %~ tail) . (hashMap %~ HML.delete delCandidate)
           else id
-    return . incrementCounter $
-      hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
+    return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
 
 -- | Append a value to an existing value
 append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-append lhm k v = modifyMVar_ lhm $ updateMRU k >=> return .
-  (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k) . incrementCounter
+append lhm k v = modifyMVar_ lhm $
+  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
 -- | Prepend a value to an existing value
 prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-prepend lhm k v = modifyMVar_ lhm $ updateMRU k >=> return .
-  (hashMap %~ HML.adjust (value %~ C8.append v) k) . incrementCounter
+prepend lhm k v = modifyMVar_ lhm $
+  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
@@ -114,8 +113,8 @@ cleanup lhm = do
 touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
 touch lhm k t = do
   time <- convertTime t
-  modifyMVar_ lhm $ updateMRU k >=> return .
-    (hashMap %~ HML.adjust (ttl .~ time) k) . incrementCounter
+  modifyMVar_ lhm $
+    updateMRU k >=> return . (hashMap %~ HML.adjust (ttl .~ time) k)
 
 -- | Flush out all KVPs that are valid as least as long as the specified time.
 -- Short times are relative, long ones absolute, like when setting keys. A time
@@ -143,6 +142,9 @@ updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
 -- | Increment the insertion counter
-incrementCounter :: LimitedHashMap -> LimitedHashMap
-incrementCounter = counter %~ (+1)
+getUnique :: MVar LimitedHashMap -> IO Integer
+getUnique lhm = do
+  unique <- view counter <$> readMVar lhm
+  modifyMVar_ lhm $ return . (counter %~ (+1))
+  return unique
 
