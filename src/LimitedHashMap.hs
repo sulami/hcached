@@ -17,6 +17,7 @@ data Value = Value
   { _value :: !ByteString -- ^ The actual value as supplied
   , _flags :: !Int        -- ^ Arbitrary flags
   , _ttl   :: !POSIXTime  -- ^ The time to live of this KVP
+  , _uniq  :: !Integer    -- ^ Monotonically increasing unique value
   } deriving (Show)
 
 makeLenses ''Value
@@ -29,7 +30,7 @@ data LimitedHashMap = LimitedHashMap
   { _hashMap :: !(HML.HashMap ByteString Value) -- ^ The Hashmap used
   , _maxSize :: !Int                            -- ^ Maximum hashmap size
   , _mru     :: ![ByteString]                   -- ^ Recently used hashes
-  , _uniq    :: !Integer                        -- ^ Insertion counter
+  , _counter :: !Integer                        -- ^ Insertion counter
   }
 
 makeLenses ''LimitedHashMap
@@ -43,7 +44,8 @@ set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
     -> IO ()
 set lhm k f t v = do
   time <- convertTime t
-  let value = Value v f time
+  unique <- view counter <$> readMVar lhm
+  let value = Value v f time unique
   modifyMVar_ lhm $ \s -> do
     let isFull = HML.size (s^.hashMap) >= s^.maxSize
         alreadyMember = HML.member k $ s^.hashMap
@@ -142,5 +144,5 @@ updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
 -- | Increment the insertion counter
 incrementCounter :: LimitedHashMap -> LimitedHashMap
-incrementCounter = uniq %~ (+1)
+incrementCounter = counter %~ (+1)
 
