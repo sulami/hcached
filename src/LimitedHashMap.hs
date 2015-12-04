@@ -55,17 +55,18 @@ set lhm k f t v = do
         performDeletion = if needsDeletion
           then (mru %~ tail) . (hashMap %~ HML.delete delCandidate)
           else id
-    return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
+    return . incrementCounter $
+      hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
 
 -- | Append a value to an existing value
 append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-append lhm k v = modifyMVar_ lhm $
-  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
+append lhm k v = modifyMVar_ lhm $ updateMRU k >=> return .
+  (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k) . incrementCounter
 
 -- | Prepend a value to an existing value
 prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-prepend lhm k v = modifyMVar_ lhm $
-  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
+prepend lhm k v = modifyMVar_ lhm $ updateMRU k >=> return .
+  (hashMap %~ HML.adjust (value %~ C8.append v) k) . incrementCounter
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
@@ -111,8 +112,8 @@ cleanup lhm = do
 touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
 touch lhm k t = do
   time <- convertTime t
-  modifyMVar_ lhm $
-    updateMRU k >=> return . (hashMap %~ HML.adjust (ttl .~ time) k)
+  modifyMVar_ lhm $ updateMRU k >=> return .
+    (hashMap %~ HML.adjust (ttl .~ time) k) . incrementCounter
 
 -- | Flush out all KVPs that are valid as least as long as the specified time.
 -- Short times are relative, long ones absolute, like when setting keys. A time
@@ -138,4 +139,8 @@ convertTime t = do
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
+
+-- | Increment the insertion counter
+incrementCounter :: LimitedHashMap -> LimitedHashMap
+incrementCounter = uniq %~ (+1)
 
