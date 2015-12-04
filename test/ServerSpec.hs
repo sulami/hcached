@@ -57,6 +57,8 @@ spec = do
         `shouldBe` (Right $ AppendCmd "key" False "value")
       parse "prepend key 5\nvalue\n"
         `shouldBe` (Right $ PrependCmd "key" False "value")
+      parse "cas key 23 1 5 123\nvalue\n"
+        `shouldBe` (Right $ CasCmd "key" 23 1 "123" False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DeleteCmd "key" False)

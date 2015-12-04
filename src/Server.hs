@@ -87,18 +87,20 @@ debugP state msg = do
   when enabled . putStrLn . ("[DEBUG] " ++) $ msg
 
 -- | The possible commands and their structure
-data Command = SetCmd C8.ByteString Int POSIXTime Bool C8.ByteString
-             | AddCmd C8.ByteString Int POSIXTime Bool C8.ByteString
-             | ReplaceCmd C8.ByteString Int POSIXTime Bool C8.ByteString
-             | AppendCmd C8.ByteString Bool C8.ByteString
-             | PrependCmd C8.ByteString Bool C8.ByteString
-             | GetCmd [C8.ByteString]
-             | DeleteCmd C8.ByteString Bool
-             | TouchCmd C8.ByteString POSIXTime Bool
-             | FlushCmd POSIXTime Bool
-             | VersionCmd
-             | QuitCmd
-             deriving (Eq, Show)
+data Command
+  = SetCmd C8.ByteString Int POSIXTime Bool C8.ByteString
+  | AddCmd C8.ByteString Int POSIXTime Bool C8.ByteString
+  | ReplaceCmd C8.ByteString Int POSIXTime Bool C8.ByteString
+  | AppendCmd C8.ByteString Bool C8.ByteString
+  | PrependCmd C8.ByteString Bool C8.ByteString
+  | CasCmd C8.ByteString Int POSIXTime C8.ByteString Bool C8.ByteString
+  | GetCmd [C8.ByteString]
+  | DeleteCmd C8.ByteString Bool
+  | TouchCmd C8.ByteString POSIXTime Bool
+  | FlushCmd POSIXTime Bool
+  | VersionCmd
+  | QuitCmd
+  deriving (Eq, Show)
 
 -- | Execute a command and return the answer for the client
 executeCommand :: MVar ServerState -> Command -> IO C8.ByteString
@@ -189,6 +191,7 @@ parse msg = do
     AP.Done r "replace"   -> useParser replaceParser r
     AP.Done r "append"    -> useParser appendParser r
     AP.Done r "prepend"   -> useParser prependParser r
+    AP.Done r "cas"       -> useParser casParser r
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser deleteParser r
@@ -259,6 +262,18 @@ prependParser = do
   k <- keyParser
   (r, v) <- sizedContentParser
   return $ PrependCmd k r v
+
+-- | Update a value if it has not been updated since the last time
+casParser :: CommandParser
+casParser = do
+  k <- keyParser
+  f <- aNumber <* char8 ' '
+  t <- liftA realToFrac aNumber <* char8 ' '
+  l <- aNumber <* char8 ' '
+  c <- AP.takeWhile1 isToken
+  r <- noreplyParser <* endOfLine
+  v <- AP.take l <* endOfLine
+  return $ CasCmd k f t c r v
 
 -- | Parse size-annotated content blocks (and optional noreply flags)
 sizedContentParser :: AP.Parser (Bool, C8.ByteString)
