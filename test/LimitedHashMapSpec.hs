@@ -162,5 +162,10 @@ spec = do
       HML.size (lhm^.hashMap) `shouldBe` 1
       length (lhm^.mru) `shouldBe` 1
 
+    it "increases the global counter when using a unique number" $ do
+      old <- getUnique mlhm
+      new <- getUnique mlhm
+      new - old `shouldBe` 1
+
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

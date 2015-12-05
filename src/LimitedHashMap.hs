@@ -141,7 +141,7 @@ convertTime t = do
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
--- | Increment the insertion counter
+-- | Get a unique number and increment the insertion counter
 getUnique :: MVar LimitedHashMap -> IO Integer
 getUnique lhm = do
   unique <- view counter <$> readMVar lhm
