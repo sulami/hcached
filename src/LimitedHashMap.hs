@@ -61,13 +61,17 @@ set lhm k f t v = do
 
 -- | Append a value to an existing value
 append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-append lhm k v = modifyMVar_ lhm $
-  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
+append lhm k v = do
+  updateUnique lhm k
+  modifyMVar_ lhm $ updateMRU k >=>
+    return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
 -- | Prepend a value to an existing value
 prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
-prepend lhm k v = modifyMVar_ lhm $
-  updateMRU k >=> return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
+prepend lhm k v = do
+  updateUnique lhm k
+  modifyMVar_ lhm $ updateMRU k >=>
+    return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
 
 -- | Query a value for a key
 get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
@@ -113,6 +117,7 @@ cleanup lhm = do
 touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
 touch lhm k t = do
   time <- convertTime t
+  updateUnique lhm k
   modifyMVar_ lhm $
     updateMRU k >=> return . (hashMap %~ HML.adjust (ttl .~ time) k)
 
@@ -140,6 +145,12 @@ convertTime t = do
 -- | Update the most recently mru list to reflect a query
 updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
+
+-- | Get a new unique number and assign it to a value
+updateUnique :: MVar LimitedHashMap -> ByteString -> IO ()
+updateUnique lhm k = do
+  new <- getUnique lhm
+  modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (uniq .~ new) k)
 
 -- | Get a unique number and increment the insertion counter
 getUnique :: MVar LimitedHashMap -> IO Integer

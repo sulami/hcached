@@ -167,5 +167,21 @@ spec = do
       new <- getUnique mlhm
       new - old `shouldBe` 1
 
+    it "increases the unique number when performing modifying opearations" $ do
+      set mlhm "1" 0 8 "one"
+      value <- get mlhm "1"
+      lhm <- readMVar mlhm
+      let value = get' lhm "1"
+      case value of
+        Nothing  -> assertFailure "Nothing returned"
+        Just val -> do
+          let old = val^.uniq
+          updateUnique mlhm "1"
+          lhm <- readMVar mlhm
+          let value = get' lhm "1"
+          case value of
+            Nothing  -> assertFailure "Nothing returned"
+            Just val -> val^.uniq - old `shouldBe` 1
+
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
