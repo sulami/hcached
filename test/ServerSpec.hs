@@ -58,7 +58,7 @@ spec = do
       parse "prepend key 5\nvalue\n"
         `shouldBe` (Right $ PrependCmd "key" False "value")
       parse "cas key 23 1 5 123\nvalue\n"
-        `shouldBe` (Right $ CasCmd "key" 23 1 "123" False "value")
+        `shouldBe` (Right $ CasCmd "key" 23 1 123 False "value")
       parse "get key koy\n" `shouldBe` (Right $ GetCmd ["key", "koy"])
       parse "gets key\n" `shouldBe` (Right $ GetCmd ["key"])
       parse "delete key\n" `shouldBe` (Right $ DeleteCmd "key" False)
@@ -121,6 +121,17 @@ spec = do
         `shouldReturn` "STORED"
       executeCommand ss (GetCmd ["key"])
         `shouldReturn` "VALUE key 0 9\r\nvalvalval\r\nEND"
+
+    it "correctly answers to cas commands" $ do
+      executeCommand ss (CasCmd "key" 0 10 0 False "val")
+        `shouldReturn` "NOT_FOUND"
+      executeCommand ss (SetCmd "key" 0 10 True "val")
+      executeCommand ss (CasCmd "key" 0 10 0 False "val")
+        `shouldReturn` "EXISTS"
+      mlhm <- view lhm <$> readMVar ss
+      Just old <- viewUnique mlhm "key"
+      executeCommand ss (CasCmd "key" 0 10 old False "val")
+        `shouldReturn` "STORED"
 
     it "correctly answers to get(s) commands" $ do
       executeCommand ss (SetCmd "key" 0 10 True "val")

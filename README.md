@@ -15,7 +15,7 @@ for new ones.
 - [x] `replace`
 - [x] `append`
 - [x] `prepend`
-- [ ] `cas`
+- [x] `cas`
 - [x] `get`/`gets`
 - [x] `delete`
 - [ ] `incr`

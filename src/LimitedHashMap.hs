@@ -152,6 +152,15 @@ updateUnique lhm k = do
   new <- getUnique lhm
   modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (uniq .~ new) k)
 
+-- | Get the unique number of a value, if it exists
+viewUnique :: MVar LimitedHashMap -> ByteString -> IO (Maybe Integer)
+viewUnique lhm k = do
+  mlhm <- readMVar lhm
+  let value = get' mlhm k
+  case value of
+    Nothing  -> return Nothing
+    Just val -> return . Just $ val^.uniq
+
 -- | Get a unique number and increment the insertion counter
 getUnique :: MVar LimitedHashMap -> IO Integer
 getUnique lhm = do

@@ -93,7 +93,7 @@ data Command
   | ReplaceCmd C8.ByteString Int POSIXTime Bool C8.ByteString
   | AppendCmd C8.ByteString Bool C8.ByteString
   | PrependCmd C8.ByteString Bool C8.ByteString
-  | CasCmd C8.ByteString Int POSIXTime C8.ByteString Bool C8.ByteString
+  | CasCmd C8.ByteString Int POSIXTime Integer Bool C8.ByteString
   | GetCmd [C8.ByteString]
   | DeleteCmd C8.ByteString Bool
   | TouchCmd C8.ByteString POSIXTime Bool
@@ -138,6 +138,15 @@ executeCommand ss cmd = do
         else do
           prepend lhm k v
           reply n "STORED"
+    CasCmd k f t c n v -> do
+      old <- viewUnique lhm k
+      case old of
+        Nothing  -> reply n "NOT_FOUND"
+        Just val -> if c /= val
+          then reply n "EXISTS"
+          else do
+            set lhm k f t v
+            reply n "STORED"
     GetCmd ks -> liftM (C8.concat . (++ ["END"])) . forM ks $
       \k -> do
       rv <- get lhm k
@@ -270,7 +279,7 @@ casParser = do
   f <- aNumber <* char8 ' '
   t <- liftA realToFrac aNumber <* char8 ' '
   l <- aNumber <* char8 ' '
-  c <- AP.takeWhile1 isToken
+  c <- toInteger <$> aNumber
   r <- noreplyParser <* endOfLine
   v <- AP.take l <* endOfLine
   return $ CasCmd k f t c r v
@@ -333,4 +342,6 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
   where
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
+
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
