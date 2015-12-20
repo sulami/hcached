@@ -120,7 +120,7 @@ spec = do
       executeCommand ss (PrependCmd "key" False "val")
         `shouldReturn` "STORED"
       executeCommand ss (GetCmd ["key"])
-        `shouldReturn` "VALUE key 0 9\r\nvalvalval\r\nEND"
+        `shouldReturn` "VALUE key 0 9 9\r\nvalvalval\r\nEND"
 
     it "correctly answers to cas commands" $ do
       executeCommand ss (CasCmd "key" 0 10 0 False "val")
@@ -137,10 +137,10 @@ spec = do
       executeCommand ss (SetCmd "key" 0 10 True "val")
       executeCommand ss (SetCmd "keys" 0 10 True "val")
       executeCommand ss (GetCmd ["no"]) `shouldReturn` "END"
-      executeCommand ss (GetCmd ["key"])
-        `shouldReturn` "VALUE key 0 3\r\nval\r\nEND"
-      executeCommand ss (GetCmd ["key", "no", "keys"])
-        `shouldReturn` "VALUE key 0 3\r\nval\r\nVALUE keys 0 3\r\nval\r\nEND"
+      executeCommand ss (GetCmd ["key"]) `shouldReturn`
+        "VALUE key 0 3 12\r\nval\r\nEND"
+      executeCommand ss (GetCmd ["key", "no", "keys"]) `shouldReturn`
+        "VALUE key 0 3 12\r\nval\r\nVALUE keys 0 3 13\r\nval\r\nEND"
 
     it "correctly answers to delete commands" $ do
       executeCommand ss (SetCmd "key" 0 10 True "val")

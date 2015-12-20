@@ -153,11 +153,11 @@ executeCommand ss cmd = do
       case rv of
         Nothing  -> return ""
         Just val -> do
-          let brint = C8.pack . show
-              flgs = brint $ val^.flags
-              valu = val^.value
+          let flgs = brint $ val^.flags
               size = brint $ C8.length valu
-              item = C8.unwords ["VALUE", k, flgs, size]
+              casu = brint $ val^.uniq
+              item = C8.unwords ["VALUE", k, flgs, size, casu]
+              valu = val^.value
           return $ C8.concat [item, "\r\n", valu, "\r\n"]
     DeleteCmd k n -> do
       mem <- isMember lhm k
@@ -177,6 +177,10 @@ executeCommand ss cmd = do
       flush lhm t
       reply n "OK"
     VersionCmd -> view ver <$> readMVar ss
+
+-- | Show and pack, "ByteString-print"
+brint :: Show a => a -> C8.ByteString
+brint = C8.pack . show
 
 -- | Reply with a given message, or if noreply is set, with nothing
 reply :: Bool -> C8.ByteString -> IO C8.ByteString
