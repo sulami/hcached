@@ -154,11 +154,11 @@ executeCommand ss cmd = do
         Nothing  -> return ""
         Just val -> do
           let brint = C8.pack . show
-              flags = brint $ fst val
-              value = snd val
-              size = brint $ C8.length value
-              item = C8.unwords ["VALUE", k, flags, size]
-          return $ C8.concat [item, "\r\n", value, "\r\n"]
+              flgs = brint $ val^.flags
+              valu = val^.value
+              size = brint $ C8.length valu
+              item = C8.unwords ["VALUE", k, flgs, size]
+          return $ C8.concat [item, "\r\n", valu, "\r\n"]
     DeleteCmd k n -> do
       mem <- isMember lhm k
       if not mem

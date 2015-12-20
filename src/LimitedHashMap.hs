@@ -74,7 +74,7 @@ prepend lhm k v = do
     return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
 
 -- | Query a value for a key
-get :: MVar LimitedHashMap -> ByteString -> IO (Maybe (Int, ByteString))
+get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
 get lhm k = do
   state <- readMVar lhm
   now <- getPOSIXTime
@@ -87,7 +87,7 @@ get lhm k = do
         return Nothing
       else do
         modifyMVar_ lhm $ updateMRU k
-        return $ Just . (view flags &&& view value) =<< rv
+        return rv
 
 -- | Pure version of get for testing
 get' :: LimitedHashMap -> ByteString -> Maybe Value
