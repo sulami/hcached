@@ -1,27 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 -- | This module handles setting up the server and handling client requests,
 -- parsing requests and dispatching commands to the embedded LHM.
 
 module Server where
 
-import           Control.Applicative ((<|>), (<*>), (<*), liftA)
-import           Control.Concurrent (forkIO, threadDelay)
-import           Control.Concurrent.MVar (MVar, newMVar, readMVar)
-import           Control.Monad (forM, liftM, unless, when)
-import qualified Data.ByteString.Char8 as C8
-import           Data.Version (showVersion)
-import           Data.Word (Word8)
+import           Control.Applicative              (liftA, (<*), (<*>), (<|>))
+import           Control.Concurrent               (forkIO, threadDelay)
+import           Control.Concurrent.MVar          (MVar, newMVar, readMVar)
+import           Control.Monad                    (forM, liftM, unless, when)
+import qualified Data.ByteString.Char8            as C8
+import           Data.Version                     (showVersion)
+import           Data.Word                        (Word8)
 
-import           Control.Lens ((^.), makeLenses, view)
-import qualified Data.Attoparsec.ByteString as AP
+import           Control.Lens                     (makeLenses, view, (^.))
+import qualified Data.Attoparsec.ByteString       as AP
 import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
-import           Data.Time.Clock.POSIX (POSIXTime)
-import qualified Network.Simple.TCP as TCP
+import           Data.Time.Clock.POSIX            (POSIXTime)
+import qualified Network.Simple.TCP               as TCP
 
-import qualified Paths_hcached as P
 import           LimitedHashMap
+import qualified Paths_hcached                    as P
 
 -- | Hold all state that the server has
 data ServerState = ServerState

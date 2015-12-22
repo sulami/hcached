@@ -2,17 +2,17 @@
 
 module LimitedHashMapSpec where
 
-import           Control.Arrow ((&&&))
+import           Control.Arrow           ((&&&))
 import           Control.Concurrent.MVar (MVar, newMVar, readMVar, swapMVar)
-import           Control.Monad (liftM, when)
-import           Data.Maybe (isJust, isNothing)
+import           Control.Monad           (liftM, when)
+import           Data.Maybe              (isJust, isNothing)
 
-import           Control.Lens ((^.), view)
-import           Data.ByteString (ByteString)
-import qualified Data.HashMap.Lazy as HML
-import           Data.Time.Clock.POSIX (getPOSIXTime)
+import           Control.Lens            (view, (^.))
+import           Data.ByteString         (ByteString)
+import qualified Data.HashMap.Lazy       as HML
+import           Data.Time.Clock.POSIX   (getPOSIXTime)
 import           Test.Hspec
-import           Test.HUnit.Base (assertFailure)
+import           Test.HUnit.Base         (assertFailure)
 
 import           LimitedHashMap
 

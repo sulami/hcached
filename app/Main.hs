@@ -2,7 +2,7 @@ module Main where
 
 import           Options (Options, defineOptions, runCommand, simpleOption)
 
-import           Server (initialState, runServer)
+import           Server  (initialState, runServer)
 
 -- | Possible command-line options.
 data MainOptions = MainOptions

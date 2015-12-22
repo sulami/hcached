@@ -3,20 +3,21 @@
 module ServerSpec where
 
 
-import           Control.Concurrent (forkIO, threadDelay)
+import           Control.Concurrent      (forkIO, threadDelay)
 import           Control.Concurrent.MVar (newMVar, readMVar)
-import           Data.ByteString.Char8 (pack)
-import           Data.Either (isLeft)
-import           Data.Maybe (isJust)
-import           Data.Version (showVersion)
-import           System.IO (BufferMode (..), hGetLine, hPutStr, hSetBuffering)
+import           Data.ByteString.Char8   (pack)
+import           Data.Either             (isLeft)
+import           Data.Maybe              (isJust)
+import           Data.Version            (showVersion)
+import           System.IO               (BufferMode (..), hGetLine, hPutStr,
+                                          hSetBuffering)
 
-import           Control.Lens ((^.), view)
-import           Network (PortID (..), connectTo)
+import           Control.Lens            (view, (^.))
+import           Network                 (PortID (..), connectTo)
 import           Test.Hspec
 
 import           LimitedHashMap
-import qualified Paths_hcached as P
+import qualified Paths_hcached           as P
 import           Server
 
 spec :: Spec

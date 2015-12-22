@@ -2,15 +2,15 @@
 
 module LimitedHashMap where
 
-import           Control.Arrow ((&&&))
+import           Control.Arrow           ((&&&))
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
-import           Control.Monad ((>=>), forM_, when)
+import           Control.Monad           (forM_, when, (>=>))
 
-import           Control.Lens ((^.), (%~), (.~), makeLenses, view)
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as C8
-import qualified Data.HashMap.Lazy as HML
-import           Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
+import           Control.Lens            (makeLenses, view, (%~), (.~), (^.))
+import           Data.ByteString         (ByteString)
+import qualified Data.ByteString.Char8   as C8
+import qualified Data.HashMap.Lazy       as HML
+import           Data.Time.Clock.POSIX   (POSIXTime, getPOSIXTime)
 
 -- | Data that is stored together with a value
 data Value = Value
