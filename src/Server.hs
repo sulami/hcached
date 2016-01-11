@@ -19,6 +19,9 @@ import qualified Data.Attoparsec.ByteString       as AP
 import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
 import           Data.Time.Clock.POSIX            (POSIXTime)
 import qualified Network.Simple.TCP               as TCP
+import           System.Posix.Syslog              (Facility (..), Option (..),
+                                                   Priority (..), logUpTo,
+                                                   syslog, withSyslog)
 
 import           LimitedHashMap
 import qualified Paths_hcached                    as P
@@ -84,7 +87,9 @@ answer sock msg = TCP.send sock $ C8.append msg "\r\n"
 debugP :: MVar ServerState -> String -> IO ()
 debugP state msg = do
   enabled <- view debug <$> readMVar state
-  when enabled . putStrLn . ("[DEBUG] " ++) $ msg
+  when enabled . withSyslog "hcached" [PID,CONS] USER (logUpTo Debug) $ do
+     syslog Debug msg
+     putStrLn . ("[DEBUG] " ++) $ msg
 
 -- | The possible commands and their structure
 data Command
