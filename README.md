@@ -6,7 +6,7 @@ hashtable to be used for simple caching. The hashtable is a size-limited one
 just like [memcached](http://www.memcached.org/)'s one, where the maximum size
 of the table can be specified at startup. When the size limit is reached,
 hcached discards the least recently used key-value-pairs first to make space
-for new ones.
+for new ones. Logging is done both to `stdout` and the syslog daemon.
 
 ### Memcached-compability
 
