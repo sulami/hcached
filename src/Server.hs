@@ -48,7 +48,7 @@ runServer :: ServerState -> Word -> IO ()
 runServer state port = withSyslog "hcached" [PID] USER (logUpTo Debug) $ do
   mst <- newMVar state
   forkIO $ janitor mst
-  infoP $ "Starting hcached, listening on port " ++ show port
+  infoP $ "Starting up, listening on port " ++ show port
   TCP.serve (TCP.Host "0.0.0.0") (show port) $ handle mst
 
 -- | Handle an incoming connection
@@ -75,6 +75,7 @@ handle state (sock, remoteAddr) = do
 janitor :: MVar ServerState -> IO ()
 janitor state = do
   s <- readMVar state
+  debugP state "Running janitor job"
   cleanup $ view lhm s
   threadDelay $ view cui s * 1000000
   janitor state
