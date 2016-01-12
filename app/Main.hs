@@ -18,9 +18,9 @@ instance Options MainOptions where
         "Enable debug output"
     <*> simpleOption "port" 11211
         "Port to listen on"
-    <*> simpleOption "cleanup" 10
+    <*> simpleOption "cleanup" 60
         "Cleanup interval in seconds"
-    <*> simpleOption "size" 100
+    <*> simpleOption "size" 10000
         "Size of the hashmap in keys"
 
 -- | Main entry point.
