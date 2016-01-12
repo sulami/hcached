@@ -45,7 +45,7 @@ initialState dbg cui size = do
 
 -- | Run the server on the specified port
 runServer :: ServerState -> Word -> IO ()
-runServer state port = do
+runServer state port = withSyslog "hcached" [PID] USER (logUpTo Debug) $ do
   mst <- newMVar state
   forkIO $ janitor mst
   infoP $ "Starting hcached, listening on port " ++ show port
@@ -85,7 +85,7 @@ answer sock msg = TCP.send sock $ C8.append msg "\r\n"
 
 -- | Print info output to stdout and the syslog
 infoP :: String -> IO ()
-infoP msg = withSyslog "hcached" [PID,CONS] USER (logUpTo Info) $ do
+infoP msg = do
   syslog Info msg
   putStrLn . ("[INFO] " ++) $ msg
 
@@ -93,7 +93,7 @@ infoP msg = withSyslog "hcached" [PID,CONS] USER (logUpTo Info) $ do
 debugP :: MVar ServerState -> String -> IO ()
 debugP state msg = do
   enabled <- view debug <$> readMVar state
-  when enabled . withSyslog "hcached" [PID,CONS] USER (logUpTo Debug) $ do
+  when enabled $ do
      syslog Debug msg
      putStrLn . ("[DEBUG] " ++) $ msg
 
