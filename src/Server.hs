@@ -48,7 +48,7 @@ runServer :: ServerState -> Word -> IO ()
 runServer state port = do
   mst <- newMVar state
   forkIO $ janitor mst
-  debugP mst $ "Listening on port " ++ show port
+  infoP $ "Starting hcached, listening on port " ++ show port
   TCP.serve (TCP.Host "0.0.0.0") (show port) $ handle mst
 
 -- | Handle an incoming connection
@@ -83,7 +83,13 @@ janitor state = do
 answer :: TCP.Socket -> C8.ByteString -> IO ()
 answer sock msg = TCP.send sock $ C8.append msg "\r\n"
 
--- | Print debug output if enabled
+-- | Print info output to stdout and the syslog
+infoP :: String -> IO ()
+infoP msg = withSyslog "hcached" [PID,CONS] USER (logUpTo Info) $ do
+  syslog Info msg
+  putStrLn . ("[INFO] " ++) $ msg
+
+-- | Print debug output to stdout and the syslog if enabled
 debugP :: MVar ServerState -> String -> IO ()
 debugP state msg = do
   enabled <- view debug <$> readMVar state
