@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module LimitedHashMap where
 
@@ -9,7 +8,6 @@ import           Control.Monad           (forM_, when, (>=>))
 
 import           Control.Lens            (makeLenses, view, (%~), (.~), (^.))
 import           Data.ByteString         (ByteString)
-import qualified Data.ByteString         as BS
 import qualified Data.ByteString.Char8   as C8
 import qualified Data.HashMap.Lazy       as HML
 import           Data.Time.Clock.POSIX   (POSIXTime, getPOSIXTime)
@@ -169,12 +167,4 @@ getUnique lhm = do
   unique <- view counter <$> readMVar lhm
   modifyMVar_ lhm $ return . (counter %~ (+1))
   return unique
-
--- | Check if a value is a valid integer, and thus eligeble for incr/decr
-isInteger :: MVar LimitedHashMap -> ByteString -> IO (Maybe Bool)
-isInteger lhm k = do
-  rv <- get lhm k
-  case rv of
-    Nothing  -> return Nothing
-    Just val -> return . Just $ (BS.all (`BS.elem` "1234567890") . view value) val
 

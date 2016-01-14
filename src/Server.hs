@@ -10,6 +10,7 @@ import           Control.Applicative              (liftA, (<*), (<*>), (<|>))
 import           Control.Concurrent               (forkIO, threadDelay)
 import           Control.Concurrent.MVar          (MVar, newMVar, readMVar)
 import           Control.Monad                    (forM, liftM, unless, when)
+import qualified Data.ByteString                  as BS
 import qualified Data.ByteString.Char8            as C8
 import           Data.Version                     (showVersion)
 import           Data.Word                        (Word8)
@@ -358,6 +359,10 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
   where
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
+
+-- | Check if a value is a valid integer, and thus eligeble for incr/decr
+isInteger :: BS.ByteString -> Bool
+isInteger = BS.all (`BS.elem` "1234567890")
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
