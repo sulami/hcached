@@ -13,9 +13,9 @@ import           Control.Monad                    (forM, liftM, unless, when)
 import qualified Data.ByteString                  as BS
 import qualified Data.ByteString.Char8            as C8
 import           Data.Version                     (showVersion)
-import           Data.Word                        (Word8)
+import           Data.Word                        (Word64, Word8)
 
-import           Control.Lens                     (makeLenses, view, (^.))
+import           Control.Lens                     (makeLenses, over, view, (^.))
 import qualified Data.Attoparsec.ByteString       as AP
 import           Data.Attoparsec.ByteString.Char8 (char8, endOfLine)
 import           Data.Time.Clock.POSIX            (POSIXTime)
@@ -360,9 +360,25 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
 
+-- | Increment a value, wrapping at the unsigned 64-bit mark
+doIncr :: Value -> Value
+doIncr = over value increment
+  where
+    increment :: C8.ByteString -> C8.ByteString
+    increment bs = let num = read $ C8.unpack bs :: Word64
+                    in C8.pack . show $ num + 1
+
+-- | Decrement a value, stopping at zero
+doDecr :: Value -> Value
+doDecr = over value decrement
+  where
+    decrement :: C8.ByteString -> C8.ByteString
+    decrement bs = let num = read $ C8.unpack bs :: Word64
+                    in if num == 0 then bs else C8.pack . show $ num - 1
+
 -- | Check if a value can be decremented
 canDecr :: Value -> Bool
-canDecr val = canIncr val && (read . C8.unpack $ view value val) > 0
+canDecr val = canIncr val && (read . C8.unpack $ view value val :: Word64) > 0
 
 -- | Check if a value can be incremented
 canIncr :: Value -> Bool

@@ -46,10 +46,24 @@ spec = do
       hmAfter <- readMVar mlhm
       get' hmAfter "one" `shouldBe` Nothing
 
-  describe "LHM Connction" $
+  describe "Number Module" $ do
     it "can check whether a value is a valid integer" $ do
       any isInteger ["one", "0x12", "1.0"] `shouldBe` False
       all isInteger ["432"] `shouldBe` True
+
+    context "when decrementing values" $ do
+      it "decrements values properly" $
+        doDecr (Value "12" 0 0 0) `shouldBe` Value "11" 0 0 0
+
+      it "does not decrement values that are already zero" $
+        doDecr (Value "0" 0 0 0) `shouldBe` Value "0" 0 0 0
+
+    context "when incrementing values" $ do
+      it "increments values properly" $
+        doIncr (Value "8" 0 0 0) `shouldBe` Value "9" 0 0 0
+
+      it "wraps at the 64-bit mark" $
+        doIncr (Value "18446744073709551615" 0 0 0) `shouldBe` Value "0" 0 0 0
 
   describe "Command Parser" $ do
     it "parses basic valid commands" $ do
