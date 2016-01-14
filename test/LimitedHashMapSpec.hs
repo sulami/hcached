@@ -189,5 +189,12 @@ spec = do
             Nothing  -> assertFailure "Nothing returned"
             Just val -> val^.uniq - old `shouldBe` 1
 
+    it "can check whether a value is a valid integer" $ do
+      set mlhm "1" 0 8 "one"
+      isInteger mlhm "1" `shouldReturn` Just False
+      set mlhm "2" 0 8 "1"
+      isInteger mlhm "2" `shouldReturn` Just True
+      isInteger mlhm "3" `shouldReturn` Nothing
+
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
