@@ -360,6 +360,14 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
 
+-- | Check if a value can be decremented
+canDecr :: Value -> Bool
+canDecr val = canIncr val && (read . C8.unpack $ view value val) > 0
+
+-- | Check if a value can be incremented
+canIncr :: Value -> Bool
+canIncr = isInteger . view value
+
 -- | Check if a value is a valid integer, and thus eligeble for incr/decr
 isInteger :: BS.ByteString -> Bool
 isInteger = BS.all (`BS.elem` "1234567890")
