@@ -46,24 +46,10 @@ spec = do
       hmAfter <- readMVar mlhm
       get' hmAfter "one" `shouldBe` Nothing
 
-  describe "Number Module" $ do
+  describe "Number Module" $
     it "can check whether a value is a valid integer" $ do
       any isInteger ["one", "0x12", "1.0"] `shouldBe` False
       all isInteger ["432"] `shouldBe` True
-
-    context "when decrementing values" $ do
-      it "decrements values properly" $
-        doDecr 3 (Value "12" 0 0 0) `shouldBe` Value "9" 0 0 0
-
-      it "does not decrement values that are already zero" $
-        doDecr 5 (Value "0" 0 0 0) `shouldBe` Value "0" 0 0 0
-
-    context "when incrementing values" $ do
-      it "increments values properly" $
-        doIncr 2 (Value "8" 0 0 0) `shouldBe` Value "10" 0 0 0
-
-      it "wraps at the 64-bit mark" $
-        doIncr 1 (Value "18446744073709551615" 0 0 0) `shouldBe` Value "0" 0 0 0
 
   describe "Command Parser" $ do
     it "parses basic valid commands" $ do
@@ -169,6 +155,16 @@ spec = do
       executeCommand ss (DeleteCmd "key" False) `shouldReturn` "DELETED"
       executeCommand ss (DeleteCmd "key" False) `shouldReturn` "NOT_FOUND"
       executeCommand ss (DeleteCmd "key" True) `shouldReturn` ""
+
+    it "correctly answers to incr commands" $ do
+      executeCommand ss (SetCmd "key" 0 10 True "10")
+      executeCommand ss (IncrCmd "key" 2 False) `shouldReturn` "12"
+      executeCommand ss (IncrCmd "no" 1 False) `shouldReturn` "NOT_FOUND"
+
+    it "correctly answers to decr commands" $ do
+      executeCommand ss (SetCmd "key" 0 10 True "10")
+      executeCommand ss (DecrCmd "key" 3 False) `shouldReturn` "7"
+      executeCommand ss (DecrCmd "no" 1 False) `shouldReturn` "NOT_FOUND"
 
     it "correctly answers to touch commands" $ do
       executeCommand ss (TouchCmd "key" 5 False) `shouldReturn` "NOT_FOUND"

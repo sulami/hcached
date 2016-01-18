@@ -181,6 +181,16 @@ executeCommand ss cmd = do
         else do
           delete lhm k
           reply n "DELETED"
+    IncrCmd k x n -> do
+      mem <- isMember lhm k
+      if not mem
+        then reply n "NOT_FOUND"
+        else incr lhm k x >>= reply n
+    DecrCmd k x n -> do
+      mem <- isMember lhm k
+      if not mem
+        then reply n "NOT_FOUND"
+        else decr lhm k x >>= reply n
     TouchCmd k t n -> do
       mem <- isMember lhm k
       if not mem
@@ -373,22 +383,6 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
   where
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
-
--- | Increment a value by n, wrapping at the unsigned 64-bit mark
-doIncr :: Word64 -> Value -> Value
-doIncr n = over value increment
-  where
-    increment :: C8.ByteString -> C8.ByteString
-    increment bs = let num = read $ C8.unpack bs :: Word64
-                    in C8.pack . show $ num + n
-
--- | Decrement a value by n, stopping at zero
-doDecr :: Word64 -> Value -> Value
-doDecr n = over value decrement
-  where
-    decrement :: C8.ByteString -> C8.ByteString
-    decrement bs = let num = read $ C8.unpack bs :: Word64
-                    in if num == 0 then bs else C8.pack . show $ num - n
 
 -- | Check if a value can be decremented
 canDecr :: Value -> Bool

@@ -4,9 +4,12 @@ module LimitedHashMap where
 
 import           Control.Arrow           ((&&&))
 import           Control.Concurrent.MVar (MVar, modifyMVar_, readMVar)
-import           Control.Monad           (forM_, when, (>=>))
+import           Control.Monad           (forM_, liftM, when, (>=>))
+import           Data.Maybe              (fromJust)
+import           Data.Word               (Word64)
 
-import           Control.Lens            (makeLenses, view, (%~), (.~), (^.))
+import           Control.Lens            (makeLenses, over, view, (%~), (.~),
+                                          (^.))
 import           Data.ByteString         (ByteString)
 import qualified Data.ByteString.Char8   as C8
 import qualified Data.HashMap.Lazy       as HML
@@ -103,6 +106,34 @@ isMember lhm k = do
 delete :: MVar LimitedHashMap -> ByteString -> IO ()
 delete lhm k = modifyMVar_ lhm $
   return . (hashMap %~ HML.delete k) . (mru %~ filter (/= k))
+
+-- | Perform an incr command and return the new value
+incr :: MVar LimitedHashMap -> ByteString -> Word64 -> IO ByteString
+incr lhm k n = do
+  modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (doIncr n) k)
+  liftM (view value . fromJust) $ get lhm k
+
+-- | Increment a value by n, wrapping at the unsigned 64-bit mark
+doIncr :: Word64 -> Value -> Value
+doIncr n = over value increment
+  where
+    increment :: C8.ByteString -> C8.ByteString
+    increment bs = let num = read $ C8.unpack bs :: Word64
+                    in C8.pack . show $ num + n
+
+-- | Perform a decr command and return the new value
+decr :: MVar LimitedHashMap -> ByteString -> Word64 -> IO ByteString
+decr lhm k n = do
+  modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (doDecr n) k)
+  liftM (view value . fromJust) $ get lhm k
+
+-- | Decrement a value by n, stopping at zero
+doDecr :: Word64 -> Value -> Value
+doDecr n = over value decrement
+  where
+    decrement :: C8.ByteString -> C8.ByteString
+    decrement bs = let num = read $ C8.unpack bs :: Word64
+                    in if num == 0 then bs else C8.pack . show $ num - n
 
 -- | Remove all expired KVPs from the LHM
 cleanup :: MVar LimitedHashMap -> IO ()
