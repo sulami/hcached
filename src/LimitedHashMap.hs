@@ -133,7 +133,7 @@ doDecr n = over value decrement
   where
     decrement :: C8.ByteString -> C8.ByteString
     decrement bs = let num = read $ C8.unpack bs :: Word64
-                       new = num - n
+                       new = num - n :: Word64
                        repr = C8.pack . show
                     in if new < num then repr new else repr 0
 
