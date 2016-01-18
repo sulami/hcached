@@ -169,6 +169,10 @@ spec = do
       executeCommand ss (SetCmd "key" 0 10 True "10")
       executeCommand ss (DecrCmd "key" 3 False) `shouldReturn` "7"
       executeCommand ss (DecrCmd "no" 1 False) `shouldReturn` "NOT_FOUND"
+      executeCommand ss (DecrCmd "key" 1 True) `shouldReturn` ""
+      executeCommand ss (SetCmd "key2" 0 10 True "NaN")
+      executeCommand ss (DecrCmd "key2" 1 False)
+        `shouldReturn` "CLIENT_ERROR cannot decrement non-numeric value"
 
     it "correctly answers to touch commands" $ do
       executeCommand ss (TouchCmd "key" 5 False) `shouldReturn` "NOT_FOUND"

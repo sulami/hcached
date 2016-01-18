@@ -187,7 +187,7 @@ executeCommand ss cmd = do
       if not mem
         then reply n "NOT_FOUND"
         else do
-          eligeble <- canIncr . fromJust <$> get lhm k
+          eligeble <- canInDecr . fromJust <$> get lhm k
           if eligeble
             then incr lhm k x >>= reply n
             else reply n "CLIENT_ERROR cannot increment non-numeric value"
@@ -195,7 +195,11 @@ executeCommand ss cmd = do
       mem <- isMember lhm k
       if not mem
         then reply n "NOT_FOUND"
-        else decr lhm k x >>= reply n
+        else do
+          eligeble <- canInDecr . fromJust <$> get lhm k
+          if eligeble
+            then decr lhm k x >>= reply n
+            else reply n "CLIENT_ERROR cannot decrement non-numeric value"
     TouchCmd k t n -> do
       mem <- isMember lhm k
       if not mem
@@ -389,13 +393,9 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
 
--- | Check if a value can be decremented
-canDecr :: Value -> Bool
-canDecr val = canIncr val && (read . C8.unpack $ view value val :: Word64) > 0
-
--- | Check if a value can be incremented
-canIncr :: Value -> Bool
-canIncr = isInteger . view value
+-- | Check if a value can be in-/decremented
+canInDecr :: Value -> Bool
+canInDecr = isInteger . view value
 
 -- | Check if a value is a valid integer, and thus eligeble for incr/decr
 isInteger :: BS.ByteString -> Bool
