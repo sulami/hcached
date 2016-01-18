@@ -133,7 +133,9 @@ doDecr n = over value decrement
   where
     decrement :: C8.ByteString -> C8.ByteString
     decrement bs = let num = read $ C8.unpack bs :: Word64
-                    in if num == 0 then bs else C8.pack . show $ num - n
+                       new = num - n
+                       repr = C8.pack . show
+                    in if new < num then repr new else repr 0
 
 -- | Remove all expired KVPs from the LHM
 cleanup :: MVar LimitedHashMap -> IO ()

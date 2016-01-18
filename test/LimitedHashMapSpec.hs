@@ -200,6 +200,9 @@ spec = do
       it "decrements values properly" $
         doDecr 3 (Value "12" 0 0 0) `shouldBe` Value "9" 0 0 0
 
+      it "does not decrement further than zero" $
+        doDecr 5 (Value "3" 0 0 0) `shouldBe` Value "0" 0 0 0
+
       it "does not decrement values that are already zero" $
         doDecr 5 (Value "0" 0 0 0) `shouldBe` Value "0" 0 0 0
 
