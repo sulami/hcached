@@ -109,6 +109,8 @@ data Command
   | CasCmd C8.ByteString Int POSIXTime Integer Bool C8.ByteString
   | GetCmd [C8.ByteString]
   | DeleteCmd C8.ByteString Bool
+  | IncrCmd C8.ByteString Word64 Bool
+  | DecrCmd C8.ByteString Word64 Bool
   | TouchCmd C8.ByteString POSIXTime Bool
   | FlushCmd POSIXTime Bool
   | VersionCmd
@@ -221,6 +223,8 @@ parse msg = do
     AP.Done r "get"       -> useParser getParser r
     AP.Done r "gets"      -> useParser getParser r
     AP.Done r "delete"    -> useParser deleteParser r
+    AP.Done r "incr"      -> useParser incrParser r
+    AP.Done r "decr"      -> useParser decrParser r
     AP.Done r "touch"     -> useParser touchParser r
     AP.Done r "flush_all" -> useParser flushParser r
     AP.Done r "version"   -> useParser versionParser r
@@ -321,6 +325,16 @@ deleteParser :: CommandParser
 deleteParser = DeleteCmd
   <$> (char8 ' ' *> AP.takeWhile1 isToken)
   <*> noreplyParser <* endOfLine
+
+-- | Increment a value by n
+incrParser :: CommandParser
+incrParser = IncrCmd
+  <$> keyParser <*> fmap fromIntegral aNumber <*> noreplyParser <* endOfLine
+
+-- | Decrement a value by n
+decrParser :: CommandParser
+decrParser = DecrCmd
+  <$> keyParser <*> fmap fromIntegral aNumber <*> noreplyParser <* endOfLine
 
 -- | Update just the TTL of a value
 touchParser :: CommandParser
