@@ -53,17 +53,17 @@ spec = do
 
     context "when decrementing values" $ do
       it "decrements values properly" $
-        doDecr (Value "12" 0 0 0) `shouldBe` Value "11" 0 0 0
+        doDecr 3 (Value "12" 0 0 0) `shouldBe` Value "9" 0 0 0
 
       it "does not decrement values that are already zero" $
-        doDecr (Value "0" 0 0 0) `shouldBe` Value "0" 0 0 0
+        doDecr 5 (Value "0" 0 0 0) `shouldBe` Value "0" 0 0 0
 
     context "when incrementing values" $ do
       it "increments values properly" $
-        doIncr (Value "8" 0 0 0) `shouldBe` Value "9" 0 0 0
+        doIncr 2 (Value "8" 0 0 0) `shouldBe` Value "10" 0 0 0
 
       it "wraps at the 64-bit mark" $
-        doIncr (Value "18446744073709551615" 0 0 0) `shouldBe` Value "0" 0 0 0
+        doIncr 1 (Value "18446744073709551615" 0 0 0) `shouldBe` Value "0" 0 0 0
 
   describe "Command Parser" $ do
     it "parses basic valid commands" $ do

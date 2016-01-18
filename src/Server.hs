@@ -374,21 +374,21 @@ aNumber = read . C8.unpack <$> AP.takeWhile1 isNumber
     isNumber :: Word8 -> Bool
     isNumber w = w >= 48 && w <= 57
 
--- | Increment a value, wrapping at the unsigned 64-bit mark
-doIncr :: Value -> Value
-doIncr = over value increment
+-- | Increment a value by n, wrapping at the unsigned 64-bit mark
+doIncr :: Word64 -> Value -> Value
+doIncr n = over value increment
   where
     increment :: C8.ByteString -> C8.ByteString
     increment bs = let num = read $ C8.unpack bs :: Word64
-                    in C8.pack . show $ num + 1
+                    in C8.pack . show $ num + n
 
--- | Decrement a value, stopping at zero
-doDecr :: Value -> Value
-doDecr = over value decrement
+-- | Decrement a value by n, stopping at zero
+doDecr :: Word64 -> Value -> Value
+doDecr n = over value decrement
   where
     decrement :: C8.ByteString -> C8.ByteString
     decrement bs = let num = read $ C8.unpack bs :: Word64
-                    in if num == 0 then bs else C8.pack . show $ num - 1
+                    in if num == 0 then bs else C8.pack . show $ num - n
 
 -- | Check if a value can be decremented
 canDecr :: Value -> Bool
