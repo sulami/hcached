@@ -12,6 +12,7 @@ import           Control.Concurrent.MVar          (MVar, newMVar, readMVar)
 import           Control.Monad                    (forM, liftM, unless, when)
 import qualified Data.ByteString                  as BS
 import qualified Data.ByteString.Char8            as C8
+import           Data.Maybe                       (fromJust)
 import           Data.Version                     (showVersion)
 import           Data.Word                        (Word64, Word8)
 
@@ -185,7 +186,11 @@ executeCommand ss cmd = do
       mem <- isMember lhm k
       if not mem
         then reply n "NOT_FOUND"
-        else incr lhm k x >>= reply n
+        else do
+          eligeble <- canIncr . fromJust <$> get lhm k
+          if eligeble
+            then incr lhm k x >>= reply n
+            else reply n "CLIENT_ERROR cannot increment non-numeric value"
     DecrCmd k x n -> do
       mem <- isMember lhm k
       if not mem

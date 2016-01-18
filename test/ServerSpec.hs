@@ -160,6 +160,10 @@ spec = do
       executeCommand ss (SetCmd "key" 0 10 True "10")
       executeCommand ss (IncrCmd "key" 2 False) `shouldReturn` "12"
       executeCommand ss (IncrCmd "no" 1 False) `shouldReturn` "NOT_FOUND"
+      executeCommand ss (IncrCmd "key" 1 True) `shouldReturn` ""
+      executeCommand ss (SetCmd "key2" 0 10 True "NaN")
+      executeCommand ss (IncrCmd "key2" 1 False)
+        `shouldReturn` "CLIENT_ERROR cannot increment non-numeric value"
 
     it "correctly answers to decr commands" $ do
       executeCommand ss (SetCmd "key" 0 10 True "10")
