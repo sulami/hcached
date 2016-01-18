@@ -18,8 +18,8 @@ for new ones. Logging is done both to `stdout` and the syslog daemon.
 - [x] `cas`
 - [x] `get`/`gets`
 - [x] `delete`
-- [ ] `incr`
-- [ ] `decr`
+- [x] `incr`
+- [x] `decr`
 - [x] `touch`
 - [ ] `stats`
 - [x] `flush_all`
