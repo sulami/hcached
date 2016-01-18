@@ -6,7 +6,7 @@
 
 module Server where
 
-import           Control.Applicative              (liftA, (<*), (<*>), (<|>))
+import           Control.Applicative              ((<*), (<*>), (<|>))
 import           Control.Concurrent               (forkIO, threadDelay)
 import           Control.Concurrent.MVar          (MVar, newMVar, readMVar)
 import           Control.Monad                    (forM, liftM, unless, when)
@@ -285,7 +285,7 @@ insertionParser :: AP.Parser InsertionArgs
 insertionParser = do
   k <- keyParser
   f <- aNumber <* char8 ' '
-  t <- liftA realToFrac aNumber <* char8 ' '
+  t <- fmap realToFrac aNumber <* char8 ' '
   (r, v) <- sizedContentParser
   return (k, f, t, r, v)
 
@@ -308,7 +308,7 @@ casParser :: CommandParser
 casParser = do
   k <- keyParser
   f <- aNumber <* char8 ' '
-  t <- liftA realToFrac aNumber <* char8 ' '
+  t <- fmap realToFrac aNumber <* char8 ' '
   l <- aNumber <* char8 ' '
   c <- toInteger <$> aNumber
   r <- noreplyParser <* endOfLine
@@ -349,12 +349,12 @@ decrParser = DecrCmd
 -- | Update just the TTL of a value
 touchParser :: CommandParser
 touchParser = TouchCmd
-  <$> keyParser <*> liftA realToFrac aNumber <*> noreplyParser <* endOfLine
+  <$> keyParser <*> fmap realToFrac aNumber <*> noreplyParser <* endOfLine
 
 -- | Delete all KVPs that are valid longer than t (all if t == 0)
 flushParser :: CommandParser
 flushParser = FlushCmd
-  <$> liftA realToFrac (AP.option 0 (char8 ' ' *> aNumber))
+  <$> fmap realToFrac (AP.option 0 (char8 ' ' *> aNumber))
   <*> noreplyParser <* endOfLine
 
 -- | Query the version string of the server
