@@ -28,9 +28,12 @@ makeLenses ''Value
 instance Eq Value where
   x == y = x^.value == y^.value
 
+-- | The type used as unique identifier for KVPs
+type Key = ByteString
+
 -- | Stateful data needed for the size-limited hashtable
 data LimitedHashMap = LimitedHashMap
-  { _hashMap :: !(HML.HashMap ByteString Value) -- ^ The Hashmap used
+  { _hashMap :: !(HML.HashMap Key Value) -- ^ The Hashmap used
   , _maxSize :: !Int                            -- ^ Maximum hashmap size
   , _mru     :: ![ByteString]                   -- ^ Recently used hashes
   , _counter :: !Integer                        -- ^ Insertion counter
@@ -43,8 +46,7 @@ initialLHM :: Int -> LimitedHashMap
 initialLHM msize = LimitedHashMap HML.empty msize [] 0
 
 -- | Insert a new KVP
-set :: MVar LimitedHashMap -> ByteString -> Int -> POSIXTime -> ByteString
-    -> IO ()
+set :: MVar LimitedHashMap -> Key -> Int -> POSIXTime -> ByteString -> IO ()
 set lhm k f t v = do
   time <- convertTime t
   unique <- getUnique lhm
@@ -63,21 +65,21 @@ set lhm k f t v = do
     return $ hashMap %~ HML.insert k value $ performDeletion $ addToMRU s
 
 -- | Append a value to an existing value
-append :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
+append :: MVar LimitedHashMap -> Key -> ByteString -> IO ()
 append lhm k v = do
   updateUnique lhm k
   modifyMVar_ lhm $ updateMRU k >=>
     return . (hashMap %~ HML.adjust (value %~ (`C8.append` v)) k)
 
 -- | Prepend a value to an existing value
-prepend :: MVar LimitedHashMap -> ByteString -> ByteString -> IO ()
+prepend :: MVar LimitedHashMap -> Key -> ByteString -> IO ()
 prepend lhm k v = do
   updateUnique lhm k
   modifyMVar_ lhm $ updateMRU k >=>
     return . (hashMap %~ HML.adjust (value %~ C8.append v) k)
 
 -- | Query a value for a key
-get :: MVar LimitedHashMap -> ByteString -> IO (Maybe Value)
+get :: MVar LimitedHashMap -> Key -> IO (Maybe Value)
 get lhm k = do
   state <- readMVar lhm
   now <- getPOSIXTime
@@ -93,22 +95,22 @@ get lhm k = do
         return rv
 
 -- | Pure version of get for testing
-get' :: LimitedHashMap -> ByteString -> Maybe Value
+get' :: LimitedHashMap -> Key -> Maybe Value
 get' s k = HML.lookup k $ s^.hashMap
 
 -- | Check if a key is part of the LHM without updating the MRU like get would
-isMember :: MVar LimitedHashMap -> ByteString -> IO Bool
+isMember :: MVar LimitedHashMap -> Key -> IO Bool
 isMember lhm k = do
   l <- readMVar lhm
   return . HML.member k $ view hashMap l
 
 -- | Delete a KVP
-delete :: MVar LimitedHashMap -> ByteString -> IO ()
+delete :: MVar LimitedHashMap -> Key -> IO ()
 delete lhm k = modifyMVar_ lhm $
   return . (hashMap %~ HML.delete k) . (mru %~ filter (/= k))
 
 -- | Perform an incr command and return the new value
-incr :: MVar LimitedHashMap -> ByteString -> Word64 -> IO ByteString
+incr :: MVar LimitedHashMap -> Key -> Word64 -> IO ByteString
 incr lhm k n = do
   modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (doIncr n) k)
   liftM (view value . fromJust) $ get lhm k
@@ -122,7 +124,7 @@ doIncr n = over value increment
                     in C8.pack . show $ num + n
 
 -- | Perform a decr command and return the new value
-decr :: MVar LimitedHashMap -> ByteString -> Word64 -> IO ByteString
+decr :: MVar LimitedHashMap -> Key -> Word64 -> IO ByteString
 decr lhm k n = do
   modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (doDecr n) k)
   liftM (view value . fromJust) $ get lhm k
@@ -147,7 +149,7 @@ cleanup lhm = do
   forM_ toBeDeleted $ delete lhm
 
 -- | Update just the TTL of a KVP
-touch :: MVar LimitedHashMap -> ByteString -> POSIXTime -> IO ()
+touch :: MVar LimitedHashMap -> Key -> POSIXTime -> IO ()
 touch lhm k t = do
   time <- convertTime t
   updateUnique lhm k
@@ -176,17 +178,17 @@ convertTime t = do
     else now + t
 
 -- | Update the most recently mru list to reflect a query
-updateMRU :: ByteString -> LimitedHashMap -> IO LimitedHashMap
+updateMRU :: Key -> LimitedHashMap -> IO LimitedHashMap
 updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
 
 -- | Get a new unique number and assign it to a value
-updateUnique :: MVar LimitedHashMap -> ByteString -> IO ()
+updateUnique :: MVar LimitedHashMap -> Key -> IO ()
 updateUnique lhm k = do
   new <- getUnique lhm
   modifyMVar_ lhm $ return . (hashMap %~ HML.adjust (uniq .~ new) k)
 
 -- | Get the unique number of a value, if it exists
-viewUnique :: MVar LimitedHashMap -> ByteString -> IO (Maybe Integer)
+viewUnique :: MVar LimitedHashMap -> Key -> IO (Maybe Integer)
 viewUnique lhm k = do
   mlhm <- readMVar lhm
   let value = get' mlhm k
