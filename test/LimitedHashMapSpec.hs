@@ -190,13 +190,27 @@ spec = do
             Just val -> val^.uniq - old `shouldBe` 1
 
     context "when incrementing values" $ do
+      it "updates the mru" $ do
+        set mlhm "one" 0 8 "1"
+        set mlhm "two" 0 8 "2"
+        view mru <$> readMVar mlhm `shouldReturn` ["one","two"]
+        incr mlhm "one" 2 `shouldReturn` "3"
+        view mru <$> readMVar mlhm `shouldReturn` ["two","one"]
+
       it "increments values properly" $
         doIncr 2 (Value "8" 0 0 0) `shouldBe` Value "10" 0 0 0
 
       it "wraps at the 64-bit mark" $
-        doIncr 1 (Value "18446744073709551615" 0 0 0) `shouldBe` Value "0" 0 0 0
+        doIncr 3 (Value "18446744073709551615" 0 0 0) `shouldBe` Value "2" 0 0 0
 
     context "when decrementing values" $ do
+      it "updates the mru" $ do
+        set mlhm "one" 0 8 "5"
+        set mlhm "two" 0 8 "2"
+        view mru <$> readMVar mlhm `shouldReturn` ["one","two"]
+        decr mlhm "one" 2 `shouldReturn` "3"
+        view mru <$> readMVar mlhm `shouldReturn` ["two","one"]
+
       it "decrements values properly" $
         doDecr 3 (Value "12" 0 0 0) `shouldBe` Value "9" 0 0 0
 
