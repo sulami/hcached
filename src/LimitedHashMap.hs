@@ -179,7 +179,8 @@ convertTime t = do
 
 -- | Update the most recently mru list to reflect a query
 updateMRU :: Key -> LimitedHashMap -> IO LimitedHashMap
-updateMRU k lhm = return $ mru %~ (++ [k]) . filter (/= k) $ lhm
+updateMRU k = return . (mru %~ (++ [k]) . filter (/= k))
+{-# ANN updateMRU "HLint: ignore Redundant bracket" #-}
 
 -- | Get a new unique number and assign it to a value
 updateUnique :: MVar LimitedHashMap -> Key -> IO ()
